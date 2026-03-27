@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>천안김안과 천안역점 — 경영 대시보드 (Pro Auto-Accumulate Ver.)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        brand: { 50: '#EEF2FF', 100: '#E0E7FF', 500: '#4361EE', 600: '#3A56D4', 900: '#1E1E2D' },
+        accent: { purple: '#7209B7', cyan: '#4CC9F0', orange: '#F77F00', pink: '#F72585', green: '#10B981' },
+        appBg: '#F4F7FE', 
+        surface: '#FFFFFF',
+        text: { dark: '#1E293B', gray: '#64748B', light: '#94A3B8' },
+        border: { light: '#F1F5F9', DEFAULT: '#E2E8F0' }
+      },
+      fontFamily: { heading: ['Manrope', 'sans-serif'], sans: ['Inter', 'Pretendard', 'sans-serif'] },
+      boxShadow: {
+        'card': '0px 10px 20px rgba(226, 236, 249, 0.5)',
+        'card-hover': '0px 15px 30px rgba(226, 236, 249, 0.8)',
+        'float': '0px 8px 16px rgba(67, 97, 238, 0.15)',
+        'bottom-nav': '0px -4px 20px rgba(15, 23, 42, 0.05)',
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#F4F7FE; font-family:'Inter','Pretendard',sans-serif; color:#1E293B; letter-spacing:-0.01em; -webkit-tap-highlight-color: transparent; }
+  h1,h2,h3,h4,h5,h6 { font-family:'Manrope','sans-serif'; letter-spacing:-0.02em; }
+  .material-symbols-rounded { vertical-align:middle; }
+  
+  .sidebar { width:260px; min-height:100vh; background:#FFFFFF; position:fixed; left:0; top:0; z-index:50; transition:transform .3s ease; border-right:1px solid #F1F5F9; display: flex; flex-direction: column; }
+  .main-content { margin-left:260px; transition:margin-left .3s ease; min-height:100vh; display:flex; flex-direction:column; padding-bottom: 0; }
+  
+  .nav-item { display:flex; align-items:center; gap:14px; padding:12px 20px; margin: 4px 16px; border-radius:12px; cursor:pointer; font-size:14px; color:#64748B; transition:all .2s ease; font-weight:600; }
+  .nav-item:hover:not(.active) { background:#F8FAFC; color:#1E293B; transform:translateX(4px); }
+  .nav-item.active { background:#4361EE; color:#FFFFFF; box-shadow: 0px 8px 16px rgba(67, 97, 238, 0.25); }
+  .nav-item.active .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
+  
+  .widget-card { background:#FFFFFF; border-radius:20px; padding:24px; box-shadow:0px 10px 20px rgba(226, 236, 249, 0.5); transition:all .3s ease; position:relative; border: 1px solid #F1F5F9; }
+  .widget-card:hover { box-shadow:0px 15px 30px rgba(226, 236, 249, 0.8); transform:translateY(-2px); }
+  .card-accent-line { position:absolute; left:0; top:50%; transform:translateY(-50%); width:4px; height:40px; border-radius:0 4px 4px 0; }
+  .icon-box { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink: 0; }
+  
+  .badge-trend { display:inline-flex; align-items:center; gap:2px; font-size:12px; font-weight:700; }
+  .trend-up { color:#10B981; }
+  .trend-down { color:#EF4444; }
+  .trend-neutral { color:#64748B; }
+  
+  .progress-bar { height:8px; border-radius:9999px; background:#F1F5F9; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:9999px; transition:width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+  
+  table.clean-table { width:100%; border-collapse:separate; border-spacing:0; text-align:left; min-width: 600px; }
+  table.clean-table thead th { font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#94A3B8; font-weight:700; padding:16px 12px; border-bottom:1px solid #F1F5F9; }
+  table.clean-table tbody td { padding:16px 12px; font-size:13px; color:#4B5563; font-weight:600; border-bottom:1px solid #F8FAFC; transition: background-color 0.2s; }
+  table.clean-table tbody tr:hover td { background-color:#F8FAFC; cursor:pointer; }
+  table.clean-table tbody tr:last-child td { border-bottom:none; }
+  .td-number { font-family: 'Manrope', sans-serif; font-weight: 800; color: #1E293B; text-align: right;}
+  .td-right { text-align: right; }
+
+  /* 일일 보고서 전용 엑셀 스타일 테이블 */
+  table.report-table { width:100%; border-collapse:collapse; text-align:center; min-width: 800px; }
+  table.report-table thead th { font-size:12px; color:#1E293B; font-weight:800; padding:12px; border:1px solid #E2E8F0; background:#F8FAFC; }
+  table.report-table tbody td { padding:10px 12px; font-size:13px; color:#4B5563; font-weight:600; border:1px solid #E2E8F0; transition: background-color 0.2s; }
+  table.report-table tbody td:first-child { font-weight:800; color:#1E293B; background:#F8FAFC; }
+  table.report-table tbody tr:hover td { background-color:#EEF2FF; }
+  .td-total { font-weight: 800 !important; color: #4361EE !important; background:#F4F7FE; }
+  
+  .doctor-dot { width:12px; height:12px; border-radius:4px; display:inline-block; flex-shrink: 0; }
+  .topbar { position:sticky; top:0; background:rgba(244, 247, 254, 0.85); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); padding:16px 20px; z-index:40; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #F1F5F9; }
+  
+  .input-field { width: 100%; padding: 10px 16px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; font-weight: 600; color: #1E293B; transition: all 0.2s; outline: none; }
+  .input-field:focus { border-color: #4361EE; box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1); }
+  .input-label { font-size: 11px; font-weight: 800; color: #64748B; margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:0.05em; }
+
+  /* 엑셀 형태 입력 필드 스타일 */
+  .excel-input { width: 100%; min-width: 45px; text-align: right; background: transparent; border: none; border-bottom: 1px dashed #CBD5E1; padding: 6px 4px; font-size: 13px; font-weight: 600; color: #1E293B; outline: none; transition: all 0.2s; }
+  .excel-input:focus { border-bottom: 2px solid #4361EE; background: #EEF2FF; border-radius: 4px; }
+  .excel-th { font-size: 11px; font-weight: 800; color: #64748B; padding: 12px 6px; border-bottom: 2px solid #E2E8F0; white-space: nowrap; text-align: center; }
+  .excel-td { padding: 4px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+  
+  .toggle-container { background:#FFFFFF; border: 1px solid #E2E8F0; padding:4px; border-radius:12px; display:inline-flex; align-items:center; }
+  .toggle-btn { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:700; transition:all 0.2s; cursor:pointer; outline:none; border:none; }
+  .toggle-btn.active { background:#F4F7FE; color:#4361EE; box-shadow:0px 2px 4px rgba(0,0,0,0.02); }
+  .toggle-btn:not(.active) { color:#64748B; background:transparent; }
+
+  /* ★ 개선된 커스텀 데이트 피커 스타일 ★ */
+  .custom-date-picker { position: relative; display: inline-flex; align-items: center; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: border-color 0.2s; }
+  .custom-date-picker:focus-within { border-color: #4361EE; box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1); }
+  .custom-date-picker input[type="date"], .custom-date-picker input[type="month"] { appearance: none; -webkit-appearance: none; background: transparent; border: none; padding: 10px 16px 10px 40px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; color: #1E293B; outline: none; cursor: pointer; width: 100%; z-index: 2; position: relative; }
+  .custom-date-picker input[type="date"]::-webkit-calendar-picker-indicator, .custom-date-picker input[type="month"]::-webkit-calendar-picker-indicator { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 3; }
+  .custom-date-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #4361EE; z-index: 1; font-size: 18px; pointer-events: none; }
+
+  .animate-in { animation:fadeIn .5s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity:0; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  
+  .modal-overlay { animation: overlayShow 0.3s ease forwards; }
+  .modal-content { animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+  @keyframes overlayShow { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes modalPop { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+  .mobile-nav { display: none; }
+  
+  @media(max-width:1024px){ 
+    .sidebar { transform: translateX(-100%); } 
+    .main-content { margin-left: 0; padding-bottom: 80px; } 
+    
+    .mobile-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid #F1F5F9; z-index: 50; justify-content: space-around; padding: 12px 8px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); box-shadow: 0px -4px 20px rgba(15, 23, 42, 0.05); }
+    .m-nav-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94A3B8; font-size: 10px; font-weight: 700; transition: all 0.2s; cursor: pointer; flex: 1; }
+    .m-nav-btn.active { color: #4361EE; }
+    .m-nav-btn.active .material-symbols-rounded { font-variation-settings: 'FILL' 1; transform: translateY(-2px); }
+    
+    #view-dashboard, #view-management, #view-daily-report { padding: 16px !important; gap: 16px !important; }
+    .widget-card { padding: 20px; border-radius: 16px; }
+    .topbar { padding: 12px 16px; flex-wrap: wrap; }
+    .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .toggle-container { width: 100%; justify-content: center; }
+    .toggle-btn { flex: 1; text-align: center; }
+    .custom-date-picker { width: 100%; }
+  }
+
+  @media(max-width:640px){
+    .grid-cols-4 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .text-3xl { font-size: 24px; line-height: 32px; }
+    .widget-card { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="h-24 flex items-center px-7 gap-3 mb-2">
+    <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white shadow-float flex-shrink-0">
+      <span class="material-symbols-rounded font-variation-settings-fill-1" style="font-size:24px;">visibility</span>
+    </div>
+    <div class="logo-text">
+      <div class="font-extrabold text-[16px] text-text-dark font-heading tracking-tight">FinSet Clinic</div>
+      <div class="text-[11px] font-bold text-text-light">천안역점 경영관리</div>
+    </div>
+  </div>
+  <nav class="py-2 flex-1 overflow-y-auto">
+    <div class="nav-section-label text-[10px] uppercase tracking-widest text-text-light font-bold px-7 mb-3">Main Menu</div>
+    <div class="nav-item active d-nav-btn" data-target="dashboard" onclick="switchView('dashboard')">
+      <span class="material-symbols-rounded" style="font-size:22px">dashboard</span><span class="nav-label">대시보드 홈</span>
+    </div>
+    <div class="nav-item d-nav-btn" data-target="daily-report" onclick="switchView('daily-report')">
+      <span class="material-symbols-rounded" style="font-size:22px">receipt_long</span><span class="nav-label">일일 보고서</span>
+    </div>
+    <div class="nav-item d-nav-btn" data-target="management" onclick="switchView('management')">
+      <span class="material-symbols-rounded" style="font-size:22px">edit_document</span><span class="nav-label">데이터 입력</span>
+      <span class="w-2 h-2 rounded-full bg-brand-500 ml-auto animate-pulse"></span>
+    </div>
+    
+    <div class="h-px bg-border-light mx-6 my-6"></div>
+    <div class="nav-section-label text-[10px] uppercase tracking-widest text-text-light font-bold px-7 mb-3">Quick Links</div>
+    <div class="nav-item" onclick="navigateAndScroll('revenue')"><span class="material-symbols-rounded" style="font-size:20px">payments</span><span class="nav-label">매출 현황</span></div>
+    <div class="nav-item" onclick="navigateAndScroll('surgery')"><span class="material-symbols-rounded" style="font-size:20px">vaccines</span><span class="nav-label">수술 통계</span></div>
+    <div class="nav-item" onclick="navigateAndScroll('incentive')"><span class="material-symbols-rounded" style="font-size:20px">military_tech</span><span class="nav-label">목표 달성</span></div>
+    <div class="nav-item" onclick="navigateAndScroll('patients')"><span class="material-symbols-rounded" style="font-size:20px">groups</span><span class="nav-label">환자 유입</span></div>
+    <div class="nav-item" onclick="navigateAndScroll('channels')"><span class="material-symbols-rounded" style="font-size:20px">donut_small</span><span class="nav-label">마케팅 퍼널</span></div>
+  </nav>
+</aside>
+
+<nav class="mobile-nav">
+  <div class="m-nav-btn active" data-target="dashboard" onclick="switchView('dashboard')">
+    <span class="material-symbols-rounded">dashboard</span><span>홈</span>
+  </div>
+  <div class="m-nav-btn" data-target="daily-report" onclick="switchView('daily-report')">
+    <span class="material-symbols-rounded">receipt_long</span><span>보고서</span>
+  </div>
+  <div class="m-nav-btn" onclick="navigateAndScroll('revenue')">
+    <span class="material-symbols-rounded">payments</span><span>매출</span>
+  </div>
+  <div class="m-nav-btn" data-target="management" onclick="switchView('management')">
+    <span class="material-symbols-rounded">edit_document</span><span class="relative">입력<span class="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span></span>
+  </div>
+</nav>
+
+<div class="main-content" id="main-content">
+  
+  <div class="topbar">
+    <div class="flex items-center gap-2 lg:gap-3 w-full lg:w-auto justify-between lg:justify-start">
+      <h2 class="text-base lg:text-lg font-extrabold text-text-dark font-heading">Welcome, 원장님 👋</h2>
+      <div class="lg:hidden relative w-8 h-8 flex items-center justify-center bg-white border border-border-light rounded-full shadow-sm">
+        <span class="material-symbols-rounded text-text-gray" style="font-size:18px">notifications</span>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-accent-pink rounded-full border border-white"></span>
+      </div>
+    </div>
+    <div class="hidden lg:flex items-center gap-5">
+      <div class="px-4 py-2 bg-white rounded-xl border border-border-light text-xs font-bold text-text-gray shadow-sm flex items-center gap-2" id="sync-status-desktop">
+        <span class="material-symbols-rounded text-brand-500" style="font-size:16px;">sync</span>연동 완료
+      </div>
+      <div class="relative w-10 h-10 flex items-center justify-center bg-white border border-border-light rounded-full cursor-pointer hover:bg-gray-50 transition shadow-sm">
+        <span class="material-symbols-rounded text-text-gray" style="font-size:20px">notifications</span>
+        <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-accent-pink rounded-full border-2 border-white"></span>
+      </div>
+      <div class="w-10 h-10 rounded-full bg-brand-900 text-white flex items-center justify-center text-sm font-bold shadow-md cursor-pointer">원</div>
+    </div>
+  </div>
+
+  <div id="view-dashboard" class="p-8 lg:p-10 space-y-6 lg:space-y-8 max-w-[1600px] mx-auto w-full animate-in block">
+    
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+      <div class="lg:col-span-1 widget-card pl-6 lg:pl-8 flex flex-row lg:flex-col justify-between lg:justify-start items-center lg:items-start gap-4">
+        <div class="card-accent-line bg-accent-orange hidden lg:block"></div>
+        <div>
+          <p class="text-xs font-bold text-text-light mb-1">Today's Date</p>
+          <h3 class="text-lg lg:text-2xl font-extrabold text-text-dark font-heading" id="dash-today-date"></h3>
+        </div>
+        <div class="icon-box bg-orange-50 text-accent-orange lg:mt-4"><span class="material-symbols-rounded font-variation-settings-fill-1">today</span></div>
+      </div>
+      <div class="lg:col-span-3 widget-card p-6 lg:p-8 flex flex-col justify-center items-center lg:items-start text-center lg:text-left bg-gradient-to-br from-white to-brand-50/30">
+        <h2 class="text-2xl lg:text-3xl font-extrabold text-text-dark font-heading mb-2 lg:mb-3">천안 김안과 정도현 원장님,</h2>
+        <p class="text-sm lg:text-base text-text-gray font-semibold leading-relaxed">오늘도 환자분들에게 밝은 세상을 선물하는 당신의 열정을 응원합니다. 힘찬 하루 보내세요!</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+      <div class="widget-card pl-6 lg:pl-8">
+        <div class="card-accent-line bg-accent-cyan hidden lg:block"></div>
+        <div class="flex justify-between items-center mb-4 lg:mb-6">
+          <h3 class="font-extrabold text-sm lg:text-base text-text-dark">오늘의 이슈</h3>
+          <div class="icon-box bg-cyan-50 text-accent-cyan"><span class="material-symbols-rounded font-variation-settings-fill-1" style="font-size: 20px">notification_important</span></div>
+        </div>
+        <div id="dash-today-issue" class="text-sm text-text-gray font-semibold leading-relaxed">오늘 등록된 이슈가 없습니다.</div>
+      </div>
+      <div class="widget-card pl-6 lg:pl-8">
+        <div class="card-accent-line bg-brand-500 hidden lg:block"></div>
+        <div class="flex justify-between items-center mb-4 lg:mb-6">
+          <h3 class="font-extrabold text-sm lg:text-base text-text-dark">금주 이슈</h3>
+          <div class="icon-box bg-brand-50 text-brand-500"><span class="material-symbols-rounded font-variation-settings-fill-1" style="font-size: 20px">event_note</span></div>
+        </div>
+        <div class="space-y-3" id="dash-week-issues">
+          <p class="text-sm text-text-gray font-semibold">금주 등록된 이슈가 없습니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 bg-white p-4 lg:p-0 lg:bg-transparent rounded-2xl lg:rounded-none shadow-sm lg:shadow-none">
+      <div class="toggle-container shadow-sm w-full lg:w-auto">
+        <button id="btn-monthly" onclick="setTimeframe('monthly')" class="toggle-btn active">Monthly Data</button>
+        <button id="btn-daily" onclick="setTimeframe('daily')" class="toggle-btn">Daily Data</button>
+      </div>
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+        <div class="custom-date-picker" id="wrapper-dash-month">
+          <span class="material-symbols-rounded custom-date-icon">calendar_month</span>
+          <input type="month" id="dash-month-select">
+        </div>
+        <div class="custom-date-picker hidden" id="wrapper-dash-date">
+          <span class="material-symbols-rounded custom-date-icon">calendar_today</span>
+          <input type="date" id="dash-date-select">
+        </div>
+        <button onclick="switchView('management')" class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-2.5 lg:py-2.5 rounded-xl font-bold text-sm transition-all shadow-float flex items-center justify-center gap-2 w-full sm:w-auto">
+          <span class="material-symbols-rounded" style="font-size:18px">add</span> 데이터 입력
+        </button>
+      </div>
+    </div>
+
+    <div class="lg:hidden text-right text-xs font-bold text-text-light" id="sync-status-mobile">
+      연동 완료
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div class="widget-card pl-5 lg:pl-8 p-5 lg:p-6">
+        <div class="card-accent-line bg-brand-500 hidden lg:block"></div>
+        <div class="flex justify-between items-start">
+          <div><p class="text-[10px] lg:text-xs font-bold text-text-light mb-1" id="lbl-rev-total">Total Revenue</p>
+            <h3 class="text-xl lg:text-[32px] font-extrabold text-text-dark font-heading"><span id="kpi-total-revenue">0</span><span id="kpi-total-revenue-unit" class="text-xs lg:text-base font-bold text-text-gray ml-1">만</span></h3></div>
+          <div class="icon-box w-8 h-8 lg:w-12 lg:h-12 bg-brand-50 text-brand-500"><span class="material-symbols-rounded font-variation-settings-fill-1 text-sm lg:text-2xl">payments</span></div>
+        </div>
+      </div>
+
+      <div class="widget-card pl-5 lg:pl-8 p-5 lg:p-6">
+        <div class="card-accent-line bg-accent-cyan hidden lg:block"></div>
+        <div class="flex justify-between items-start">
+          <div><p class="text-[10px] lg:text-xs font-bold text-text-light mb-1" id="lbl-pat-total">Total Patients</p>
+            <h3 class="text-xl lg:text-[32px] font-extrabold text-text-dark font-heading"><span id="kpi-total-patients">0</span><span class="text-xs lg:text-base font-bold text-text-gray ml-1">건</span></h3></div>
+          <div class="icon-box w-8 h-8 lg:w-12 lg:h-12 bg-cyan-50 text-accent-cyan"><span class="material-symbols-rounded font-variation-settings-fill-1 text-sm lg:text-2xl">group</span></div>
+        </div>
+      </div>
+
+      <div class="widget-card pl-5 lg:pl-8 p-5 lg:p-6">
+        <div class="card-accent-line bg-accent-purple hidden lg:block"></div>
+        <div class="flex justify-between items-start">
+          <div><p class="text-[10px] lg:text-xs font-bold text-text-light mb-1">Non-covered</p>
+            <h3 class="text-xl lg:text-[32px] font-extrabold text-text-dark font-heading"><span id="kpi-non-covered-pct">0</span><span class="text-xs lg:text-base font-bold text-text-gray ml-1">%</span></h3></div>
+          <div class="icon-box w-8 h-8 lg:w-12 lg:h-12 bg-purple-50 text-accent-purple"><span class="material-symbols-rounded font-variation-settings-fill-1 text-sm lg:text-2xl">pie_chart</span></div>
+        </div>
+      </div>
+
+      <div class="widget-card pl-5 lg:pl-8 p-5 lg:p-6">
+        <div class="card-accent-line bg-accent-orange hidden lg:block"></div>
+        <div class="flex justify-between items-start">
+          <div><p class="text-[10px] lg:text-xs font-bold text-text-light mb-1">Rev per Patient</p>
+            <h3 class="text-xl lg:text-[32px] font-extrabold text-text-dark font-heading"><span id="kpi-rev-per-patient">0</span><span class="text-xs lg:text-base font-bold text-text-gray ml-1">만</span></h3></div>
+          <div class="icon-box w-8 h-8 lg:w-12 lg:h-12 bg-orange-50 text-accent-orange"><span class="material-symbols-rounded font-variation-settings-fill-1 text-sm lg:text-2xl">person_add</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6" id="revenue">
+      <div class="widget-card">
+        <div class="flex justify-between items-center mb-4 lg:mb-6">
+          <h3 class="font-extrabold text-sm lg:text-base text-text-dark" id="lbl-chart-rev">Revenue Analytics</h3>
+        </div>
+        <div class="relative h-[220px] lg:h-[300px] w-full"><canvas id="revenueBarChart"></canvas></div>
+      </div>
+      
+      <div class="widget-card" id="surgery">
+        <div class="flex justify-between items-center mb-4 lg:mb-6">
+          <h3 class="font-extrabold text-sm lg:text-base text-text-dark">원장별 총 수술 건수</h3>
+        </div>
+        <div class="relative h-[220px] lg:h-[300px] w-full"><canvas id="surgeryDoctorChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="widget-card overflow-x-auto">
+      <div class="flex justify-between items-center mb-4 lg:mb-6 min-w-[500px]">
+        <h3 class="font-extrabold text-sm lg:text-base text-text-dark">Detailed Surgery Statistics</h3>
+        <div class="px-3 py-1 bg-brand-50 text-brand-500 rounded-lg text-[10px] lg:text-xs font-bold flex items-center gap-1">
+          <span class="material-symbols-rounded" style="font-size:14px">sync</span> Auto Synced
+        </div>
+      </div>
+      <div class="overflow-x-auto pb-2">
+        <table class="clean-table">
+          <thead>
+            <tr><th>Category</th><th class="td-right">정도현</th><th class="td-right">이정우</th><th class="td-right">한선협</th><th class="td-right">이진호</th><th class="td-right">이용민</th><th class="td-right">신혁</th><th class="td-right">노훈</th><th class="td-right text-brand-500">Total</th></tr>
+          </thead>
+          <tbody id="surgery-table-body">
+            </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="patients" class="pt-4">
+      <h2 class="text-xl font-extrabold text-text-dark font-heading mb-4 lg:mb-6">환자 유입 현황</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6 mb-6">
+        <div class="widget-card text-center p-4 lg:p-6">
+          <div class="text-[10px] lg:text-xs font-bold text-text-light uppercase tracking-widest mb-2">선택 기간 총 내원</div>
+          <div class="text-2xl lg:text-3xl font-extrabold text-navy-900 font-heading"><span id="dash-pat-total">0</span></div>
+        </div>
+        <div class="widget-card text-center p-4 lg:p-6">
+          <div class="text-[10px] lg:text-xs font-bold text-text-light uppercase tracking-widest mb-2">신규환자</div>
+          <div class="text-2xl lg:text-3xl font-extrabold text-brand-500 font-heading"><span id="dash-pat-new">0</span></div>
+        </div>
+        <div class="widget-card text-center p-4 lg:p-6">
+          <div class="text-[10px] lg:text-xs font-bold text-text-light uppercase tracking-widest mb-2">오전 내원</div>
+          <div class="text-2xl lg:text-3xl font-extrabold text-navy-900 font-heading"><span id="dash-pat-am">0</span></div>
+        </div>
+        <div class="widget-card text-center p-4 lg:p-6">
+          <div class="text-[10px] lg:text-xs font-bold text-text-light uppercase tracking-widest mb-2">오후 내원</div>
+          <div class="text-2xl lg:text-3xl font-extrabold text-navy-900 font-heading"><span id="dash-pat-pm">0</span></div>
+        </div>
+      </div>
+      <div class="widget-card mb-6">
+        <div class="mb-4 font-bold text-sm lg:text-base text-text-dark">환자 추이 (재진 vs 신환)</div>
+        <div class="relative h-[200px] lg:h-[260px] w-full"><canvas id="patientTrendChart"></canvas></div>
+      </div>
+    </div>
+
+    <div id="channels" class="pt-4">
+      <h2 class="text-xl font-extrabold text-text-dark font-heading mb-4 lg:mb-6">유입 경로 분석 및 마케팅</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+        <div class="widget-card lg:col-span-1">
+          <h3 class="font-extrabold text-sm lg:text-base text-text-dark mb-4 lg:mb-6">Channel Distribution</h3>
+          <div class="relative h-[200px] lg:h-[250px] w-full"><canvas id="channelPieChart"></canvas></div>
+        </div>
+        <div class="lg:col-span-2 grid grid-cols-2 gap-4 lg:gap-6">
+          <div class="widget-card flex flex-col justify-center p-4 lg:p-6">
+            <div class="text-[10px] lg:text-sm font-bold text-text-light mb-1 lg:mb-2">Marketing Budget</div>
+            <div class="text-xl lg:text-4xl font-extrabold text-text-dark font-heading"><span id="dash-mkt-budget">0</span><span id="dash-mkt-budget-unit" class="text-xs lg:text-lg text-text-gray ml-1">만</span></div>
+          </div>
+          <div class="widget-card flex flex-col justify-center p-4 lg:p-6">
+            <div class="text-[10px] lg:text-sm font-bold text-text-light mb-1 lg:mb-2">Average CPA</div>
+            <div class="text-xl lg:text-4xl font-extrabold text-accent-green font-heading"><span id="dash-mkt-cpa">0</span><span class="text-xs lg:text-lg text-text-gray ml-1">만</span></div>
+          </div>
+          <div class="widget-card col-span-2 p-4 lg:p-6">
+            <h3 class="font-extrabold text-sm lg:text-base text-text-dark mb-2 lg:mb-4">채널별 CPA 단가 (예산 ÷ 내원)</h3>
+            <div class="relative h-[160px] lg:h-[180px] w-full"><canvas id="cpaChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="daily-revenue" class="pt-4 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+      <div>
+        <h2 class="text-xl font-extrabold text-text-dark font-heading mb-4 lg:mb-6">부분 매출 통계</h2>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="widget-card p-4 lg:p-6 text-center">
+            <div class="text-[10px] lg:text-xs font-bold text-text-light mb-1">전체 급여 매출</div>
+            <div class="text-xl lg:text-2xl font-extrabold text-navy-900 font-heading"><span id="dash-daily-cov">0</span><span class="text-sm ml-1">만</span></div>
+          </div>
+          <div class="widget-card p-4 lg:p-6 text-center">
+            <div class="text-[10px] lg:text-xs font-bold text-text-light mb-1">전체 비급여 매출</div>
+            <div class="text-xl lg:text-2xl font-extrabold text-accent-orange font-heading"><span id="dash-daily-noncov">0</span><span class="text-sm ml-1">만</span></div>
+          </div>
+        </div>
+        <div class="widget-card"><div class="relative h-[180px] lg:h-[220px] w-full"><canvas id="dailyRevenueChart"></canvas></div></div>
+      </div>
+      
+      <div id="incentive">
+        <h2 class="text-xl font-extrabold text-text-dark font-heading mb-4 lg:mb-6">Goal Achievements (인센티브)</h2>
+        <div class="widget-card">
+          <div class="space-y-4 lg:space-y-6" id="incentive-container"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="view-daily-report" class="p-4 md:p-8 lg:p-10 space-y-6 lg:space-y-8 max-w-[1400px] mx-auto w-full hidden pb-24 lg:pb-10 animate-in">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl lg:text-3xl font-extrabold text-text-dark font-heading">일일 진료 보고서</h1>
+        <p class="text-sm font-bold text-brand-500 mt-2" id="report-date-title"></p>
+      </div>
+      <button onclick="window.print()" class="bg-white border border-border-light hover:bg-gray-50 text-text-dark px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2">
+        <span class="material-symbols-rounded" style="font-size:18px">print</span> 보고서 출력
+      </button>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="widget-card text-center p-4">
+        <div class="text-[10px] font-bold text-text-light uppercase tracking-widest mb-1">오전 내원</div>
+        <div class="text-2xl font-extrabold text-navy-900 font-heading"><span id="rep-pat-am">0</span></div>
+      </div>
+      <div class="widget-card text-center p-4">
+        <div class="text-[10px] font-bold text-text-light uppercase tracking-widest mb-1">오후 내원</div>
+        <div class="text-2xl font-extrabold text-navy-900 font-heading"><span id="rep-pat-pm">0</span></div>
+      </div>
+      <div class="widget-card text-center p-4">
+        <div class="text-[10px] font-bold text-brand-500 uppercase tracking-widest mb-1">총 내원</div>
+        <div class="text-2xl font-extrabold text-brand-600 font-heading"><span id="rep-pat-total">0</span></div>
+      </div>
+      <div class="widget-card text-center p-4">
+        <div class="text-[10px] font-bold text-accent-orange uppercase tracking-widest mb-1">신환 내원 (비율)</div>
+        <div class="text-2xl font-extrabold text-accent-orange font-heading"><span id="rep-pat-new">0</span> <span class="text-sm text-text-gray font-semibold ml-1" id="rep-pat-new-pct">(0%)</span></div>
+      </div>
+    </div>
+
+    <div class="widget-card overflow-x-auto">
+      <div class="mb-4 flex items-center justify-between min-w-[600px]">
+        <h3 class="font-extrabold text-base text-text-dark">원장별 진료 및 수술 상세 내역</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="report-table">
+          <thead>
+            <tr><th class="w-32">구분</th><th>정도현</th><th>이정우</th><th>한선협</th><th>이진호</th><th>이용민</th><th>신혁</th><th>노훈</th><th class="text-brand-600">합계</th></tr>
+          </thead>
+          <tbody id="daily-report-body">
+            </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-management" class="p-4 md:p-8 lg:p-10 space-y-6 lg:space-y-8 max-w-[1400px] mx-auto w-full hidden pb-24 lg:pb-10 animate-in">
+    
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6 mb-4 lg:mb-8">
+      <div class="widget-card xl:col-span-2 shadow-card">
+        <h3 class="font-extrabold text-sm lg:text-base text-text-dark mb-4 flex items-center gap-2"><span class="material-symbols-rounded text-brand-500">add_comment</span> 주요 이슈 등록</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+          <div class="lg:col-span-1 input-group">
+            <label class="input-label">날짜 선택</label>
+            <div class="custom-date-picker w-full">
+              <span class="material-symbols-rounded custom-date-icon">calendar_today</span>
+              <input type="date" id="in-issue-date">
+            </div>
+          </div>
+          <div class="lg:col-span-3 input-group">
+            <label class="input-label">이슈 내용</label>
+            <input type="text" id="in-issue-content" class="input-field py-2.5" placeholder="오늘의 주요 이슈를 입력하세요.">
+          </div>
+          <div class="lg:col-span-4 flex justify-end">
+            <button onclick="saveIssue()" class="w-full lg:w-auto bg-accent-cyan hover:bg-cyan-600 text-white px-8 py-3 rounded-xl font-bold text-sm transition-all shadow-float flex justify-center items-center gap-2 transform hover:-translate-y-1">
+              <span class="material-symbols-rounded" style="font-size:20px">cloud_upload</span> 이슈 저장
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="widget-card xl:col-span-1 shadow-card flex flex-col">
+        <h3 class="font-extrabold text-sm lg:text-base text-text-dark mb-4 flex items-center gap-2"><span class="material-symbols-rounded text-text-gray">format_list_bulleted</span> 등록된 이슈 관리 (금주)</h3>
+        <div class="space-y-3 overflow-y-auto flex-1 max-h-[180px] pr-2" id="mgmt-week-issues">
+          </div>
+      </div>
+    </div>
+
+    <div class="widget-card flex flex-col lg:flex-row lg:items-end justify-between gap-4 lg:gap-6 sticky top-[70px] lg:top-[90px] z-30 shadow-card">
+      <div class="w-full lg:w-auto">
+        <h1 class="text-2xl lg:text-3xl font-extrabold text-text-dark font-heading mb-1 lg:mb-2">Data Controller</h1>
+        <p class="text-xs lg:text-sm font-bold text-text-light mb-3 lg:mb-4">일일 데이터를 입력하면 월간 대시보드에 자동으로 누적됩니다.</p>
+        <div class="flex items-center gap-3 w-full">
+          <div class="custom-date-picker shadow-sm w-full sm:w-auto">
+            <span class="material-symbols-rounded custom-date-icon">calendar_today</span>
+            <input type="date" id="ctrl-date-picker">
+          </div>
+        </div>
+      </div>
+      <button onclick="saveDataFromController()" class="w-full lg:w-auto bg-brand-500 hover:bg-brand-600 text-white px-8 py-3.5 lg:py-4 rounded-xl font-bold text-sm transition-all shadow-float flex justify-center items-center gap-2 transform hover:-translate-y-1">
+        <span class="material-symbols-rounded" style="font-size:20px">save</span> 일일 데이터 저장
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+      
+      <div class="widget-card lg:col-span-3 p-4 md:p-6 overflow-x-auto">
+        <h3 class="font-extrabold text-sm lg:text-base text-text-dark mb-4 lg:mb-6 border-b border-border-light pb-3 flex items-center gap-2">
+          <span class="material-symbols-rounded text-text-muted">view_list</span> 1. 원장별 환자, 수술 및 매출 지표
+        </h3>
+        <div class="min-w-[1100px]">
+          <table class="w-full text-center border-collapse">
+            <thead>
+              <tr>
+                <th class="excel-th text-left w-24">원장명</th>
+                <th class="excel-th text-brand-500 bg-brand-50">매출(만)</th>
+                <th class="excel-th text-brand-500 bg-brand-50">일목표(만)</th>
+                <th class="excel-th text-accent-cyan bg-cyan-50">예약</th>
+                <th class="excel-th text-accent-cyan bg-cyan-50">내원</th>
+                <th class="excel-th text-accent-cyan bg-cyan-50">비예약</th>
+                <th class="excel-th">백내장</th>
+                <th class="excel-th">렌즈삽입</th>
+                <th class="excel-th">엑스트라</th>
+                <th class="excel-th">스마트</th>
+                <th class="excel-th">망막주사</th>
+                <th class="excel-th">펨토</th>
+                <th class="excel-th">IPL</th>
+                <th class="excel-th">기타</th>
+              </tr>
+            </thead>
+            <tbody id="ctrl-doc-detail-grid">
+               </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="widget-card lg:col-span-3 p-4 md:p-6">
+        <h3 class="font-extrabold text-sm lg:text-base text-text-dark mb-4 lg:mb-6 border-b border-border-light pb-3 flex items-center gap-2">
+          <span class="material-symbols-rounded text-text-muted">monitoring</span> 2. 전체 환자 및 매출 요약
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div class="input-group"><label class="input-label">오전 내원</label><input type="number" id="ctrl-pat-am" class="input-field" value=""></div>
+          <div class="input-group"><label class="input-label">오후 내원</label><input type="number" id="ctrl-pat-pm" class="input-field" value=""></div>
+          <div class="input-group"><label class="input-label text-accent-orange">신규 환자</label><input type="number" id="ctrl-pat-new" class="input-field" value=""></div>
+          <div class="input-group"><label class="input-label">전체 목표 매출 (만)</label><input type="number" id="ctrl-target-total" class="input-field" value=""></div>
+          <div class="input-group"><label class="input-label text-brand-600">급여 매출 (만)</label><input type="number" id="ctrl-rev-cov" class="input-field" value=""></div>
+          <div class="input-group"><label class="input-label text-brand-600">비급여 매출 (만)</label><input type="number" id="ctrl-rev-noncov" class="input-field" value=""></div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-3 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        <div class="widget-card p-4 md:p-6">
+          <h3 class="font-extrabold text-sm lg:text-base text-text-dark mb-4 lg:mb-6 border-b border-border-light pb-3 flex items-center gap-2">
+            <span class="material-symbols-rounded text-text-muted">filter_alt</span> 3. 채널별 내원수 (명)
+          </h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="input-group"><label class="input-label">네이버</label><input type="number" id="ctrl-ch-0" class="input-field text-right" value=""></div>
+            <div class="input-group"><label class="input-label">카카오</label><input type="number" id="ctrl-ch-1" class="input-field text-right" value=""></div>
+            <div class="input-group"><label class="input-label">인스타</label><input type="number" id="ctrl-ch-2" class="input-field text-right" value=""></div>
+            <div class="input-group"><label class="input-label">MOU/소개</label><input type="number" id="ctrl-ch-3" class="input-field text-right" value=""></div>
+            <div class="input-group"><label class="input-label">유튜브</label><input type="number" id="ctrl-ch-4" class="input-field text-right" value=""></div>
+            <div class="input-group"><label class="input-label">오프라인</label><input type="number" id="ctrl-ch-5" class="input-field text-right" value=""></div>
+          </div>
+        </div>
+
+        <div class="widget-card p-4 md:p-6 flex flex-col">
+          <h3 class="font-extrabold text-sm lg:text-base text-text-dark mb-4 lg:mb-6 border-b border-border-light pb-3 flex items-center gap-2">
+            <span class="material-symbols-rounded text-text-muted">campaign</span> 4. 채널별 마케팅 예산 (만원)
+          </h3>
+          <div class="space-y-4 flex-1">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="input-group"><label class="input-label">네이버 예산</label><input type="number" id="ctrl-mkt-0" class="input-field text-right" value=""></div>
+              <div class="input-group"><label class="input-label">카카오 예산</label><input type="number" id="ctrl-mkt-1" class="input-field text-right" value=""></div>
+              <div class="input-group"><label class="input-label">인스타 예산</label><input type="number" id="ctrl-mkt-2" class="input-field text-right" value=""></div>
+              <div class="input-group"><label class="input-label">MOU 예산</label><input type="number" id="ctrl-mkt-3" class="input-field text-right" value=""></div>
+              <div class="input-group"><label class="input-label">유튜브 예산</label><input type="number" id="ctrl-mkt-4" class="input-field text-right" value=""></div>
+              <div class="input-group"><label class="input-label">오프라인 예산</label><input type="number" id="ctrl-mkt-5" class="input-field text-right" value=""></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="fixed z-[100] flex items-center gap-3 bg-brand-900 text-white px-5 py-3 lg:px-6 lg:py-4 rounded-xl lg:rounded-2xl shadow-card transition-all duration-300 opacity-0 pointer-events-none bottom-[100px] left-1/2 -translate-x-1/2 translate-y-10 lg:bottom-10 lg:left-auto lg:right-10 lg:translate-x-10 lg:translate-y-0 w-max max-w-[90vw]">
+  <div class="w-6 h-6 lg:w-8 lg:h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+    <span class="material-symbols-rounded text-white" style="font-size: 16px;">check</span>
+  </div>
+  <div>
+    <h4 class="font-extrabold text-sm" id="toast-title">연동 완료!</h4>
+    <p class="text-xs text-gray-300 mt-0.5" id="toast-msg">데이터가 성공적으로 연동되었습니다.</p>
+  </div>
+</div>
+
+<script>
+// Date Initialization
+const today = new Date();
+const todayISO = today.toISOString().slice(0, 10);
+const todayMonthISO = today.toISOString().slice(0, 7);
+
+// Initialize pickers
+document.getElementById('dash-month-select').value = todayMonthISO;
+document.getElementById('dash-date-select').value = todayISO;
+document.getElementById('ctrl-date-picker').value = todayISO;
+document.getElementById('in-issue-date').value = todayISO;
+
+const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+document.getElementById('dash-today-date').innerText = today.toLocaleDateString('ko-KR', options);
+
+const COLORS = { brand: '#4361EE', purple: '#7209B7', cyan: '#4CC9F0', orange: '#F77F00', pink: '#F72585', green: '#10B981', navy: '#1E1E2D', gray: '#E2E8F0', burgundy: '#722F37' };
+
+const DOCTORS = [
+  { id:0, name: '정도현', color: COLORS.brand },
+  { id:1, name: '이정우', color: COLORS.purple },
+  { id:2, name: '한선협', color: COLORS.cyan },
+  { id:3, name: '이진호', color: COLORS.orange },
+  { id:4, name: '이용민', color: COLORS.pink },
+  { id:5, name: '신혁',   color: COLORS.green },
+  { id:6, name: '노훈',   color: COLORS.navy }
+];
+const CHANNELS = ['네이버', '카카오', '인스타', 'MOU', '유튜브', '오프라인'];
+const CH_COLORS = [COLORS.green, '#F59E0B', COLORS.pink, COLORS.brand, '#DC2626', COLORS.navy];
+
+Chart.defaults.font.family = "'Inter','Pretendard',sans-serif";
+Chart.defaults.color = '#94A3B8';
+Chart.defaults.font.size = window.innerWidth < 768 ? 10 : 12; 
+const cleanGrid = { grid: { color: '#F1F5F9', borderDash: [4, 4] }, border: { display: false } };
+const hiddenGrid = { grid: { display: false }, border: { display: false } };
+
+let charts = {};
+let currentMode = 'monthly';
+
+// ★ Local DB (Storage) ★
+let clinicData = JSON.parse(localStorage.getItem('clinic_app_data')) || {};
+let issues = JSON.parse(localStorage.getItem('clinic_issues')) || {};
+
+// Empty Data Template
+function getEmptyData() {
+  return {
+    doctors: Array(7).fill().map(()=>({rev:0, target:0, res:0, vis:0, walk:0, cat:0, lens:0, ext:0, smt:0, ret:0, fem:0, ipl:0, etc:0})),
+    summary: { am:0, pm:0, newPat:0, targetTotal:0, cov:0, noncov:0 },
+    channels: Array(6).fill().map(()=>({v:0, b:0}))
+  };
+}
+
+// Helpers
+function getVal(val) { return val >= 10000 ? (val/10000).toFixed(2) : val.toLocaleString(); }
+function getUnit(val) { return val >= 10000 ? '억' : '만'; }
+function formatNum(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
+const getFlt = (id) => { const el = document.getElementById(id); return el ? parseFloat(el.value) || 0 : 0; };
+const getInt = (id) => { const el = document.getElementById(id); return el ? parseInt(el.value) || 0 : 0; };
+
+// Toast
+function showToast(title, msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toast-title').innerText = title;
+  document.getElementById('toast-msg').innerText = msg;
+  toast.classList.remove('opacity-0', 'translate-y-10', 'lg:translate-x-10', 'pointer-events-none');
+  toast.classList.add('opacity-100');
+  setTimeout(() => {
+    toast.classList.remove('opacity-100');
+    toast.classList.add('opacity-0', 'translate-y-10', 'lg:translate-x-10', 'pointer-events-none');
+  }, 3000);
+}
+
+function updateReportDateTitle() {
+  const dateStr = currentMode === 'monthly' ? document.getElementById('dash-month-select').value : document.getElementById('dash-date-select').value;
+  let formatted = dateStr;
+  if(currentMode === 'daily' && dateStr) {
+    const d = new Date(dateStr);
+    formatted = d.toLocaleDateString('ko-KR', options);
+  } else if (currentMode === 'monthly' && dateStr) {
+    formatted = dateStr.replace('-', '년 ') + '월';
+  }
+  document.getElementById('report-date-title').innerText = `${formatted} 기준`;
+}
+
+function setTimeframe(type) {
+  currentMode = type;
+  const isMonthly = type === 'monthly';
+  
+  const activeClass = "toggle-btn active flex-1 sm:flex-none";
+  const inactiveClass = "toggle-btn flex-1 sm:flex-none";
+  
+  document.getElementById('btn-monthly').className = isMonthly ? activeClass : inactiveClass;
+  document.getElementById('btn-daily').className = !isMonthly ? activeClass : inactiveClass;
+  
+  document.getElementById('wrapper-dash-month').classList.toggle('hidden', !isMonthly);
+  document.getElementById('wrapper-dash-date').classList.toggle('hidden', isMonthly);
+
+  setTxt('lbl-rev-total', isMonthly ? 'Total Revenue (Monthly)' : 'Total Revenue (Daily)');
+  setTxt('lbl-pat-total', isMonthly ? 'Total Patients (Monthly)' : 'Total Patients (Daily)');
+  setTxt('lbl-chart-rev', isMonthly ? 'Monthly Revenue by Doctor' : 'Daily Revenue by Doctor');
+
+  syncDateStatus();
+  updateReportDateTitle();
+  refreshAllViews();
+}
+
+function syncDateStatus() {
+  let text = currentMode === 'monthly' ? document.getElementById('dash-month-select').value : document.getElementById('dash-date-select').value;
+  if(text) {
+    const html = `<span class="material-symbols-rounded text-brand-500" style="font-size:16px;margin-right:4px">sync</span>${text} Data`;
+    if(document.getElementById('sync-status-desktop')) document.getElementById('sync-status-desktop').innerHTML = html;
+    if(document.getElementById('sync-status-mobile')) document.getElementById('sync-status-mobile').innerHTML = html;
+  }
+}
+
+// Data Change Listeners
+document.getElementById('dash-month-select').addEventListener('change', () => { syncDateStatus(); updateReportDateTitle(); refreshAllViews(); });
+document.getElementById('dash-date-select').addEventListener('change', () => { syncDateStatus(); updateReportDateTitle(); refreshAllViews(); });
+document.getElementById('ctrl-date-picker').addEventListener('change', () => { loadDataToController(); });
+
+// ★ ISSUES LOGIC ★
+function saveIssue() {
+  const date = document.getElementById('in-issue-date').value;
+  const content = document.getElementById('in-issue-content').value;
+  if (!date || !content) { alert('날짜와 내용을 모두 입력해주세요.'); return; }
+  issues[date] = content;
+  localStorage.setItem('clinic_issues', JSON.stringify(issues));
+  document.getElementById('in-issue-content').value = ''; 
+  displayIssues(); 
+  showToast("이슈 등록 완료", "입력하신 이슈가 성공적으로 등록되었습니다.");
+}
+
+function displayIssues() {
+  const selectedDateISO = document.getElementById('dash-date-select').value || todayISO;
+  const selectedDate = new Date(selectedDateISO);
+  
+  const todayIssue = issues[selectedDateISO];
+  const todayEl = document.getElementById('dash-today-issue');
+  if (todayIssue) {
+    todayEl.innerHTML = `<div class="flex items-center justify-between group"><span class="leading-relaxed pr-2">${todayIssue}</span><button onclick="deleteIssue('${selectedDateISO}')" class="text-gray-300 hover:text-red-500 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity p-1"><span class="material-symbols-rounded" style="font-size:18px">delete_outline</span></button></div>`;
+  } else {
+    todayEl.innerHTML = '해당 날짜에 등록된 이슈가 없습니다.';
+  }
+  
+  const weekIssuesContainer = document.getElementById('dash-week-issues');
+  const mgmtIssuesContainer = document.getElementById('mgmt-week-issues');
+  let dashHtml = ''; let mgmtHtml = '';
+  
+  const selectedDay = selectedDate.getDay(); 
+  const mondayDiff = selectedDay === 0 ? -6 : 1 - selectedDay;
+  let issueCount = 0;
+  
+  for (let i = 0; i < 6; i++) { 
+    const day = new Date(selectedDate);
+    day.setDate(selectedDate.getDate() + mondayDiff + i);
+    const dayISO = day.toISOString().slice(0, 10);
+    const issue = issues[dayISO];
+    
+    if (issue) {
+      issueCount++;
+      const itemHtml = `
+        <div class="flex items-start justify-between border-b border-border-light pb-3 mb-3 last:border-0 last:pb-0 last:mb-0 group">
+          <div class="flex items-start gap-3 pr-2">
+            <span class="text-[11px] font-extrabold text-brand-500 whitespace-nowrap pt-1 bg-brand-50 px-2 py-0.5 rounded-md">${dayISO.slice(5)}</span>
+            <p class="text-sm text-text-dark font-semibold leading-relaxed">${issue}</p>
+          </div>
+          <button onclick="deleteIssue('${dayISO}')" class="text-gray-300 hover:text-red-500 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity p-1 flex-shrink-0"><span class="material-symbols-rounded" style="font-size:16px">close</span></button>
+        </div>`;
+      dashHtml += itemHtml; mgmtHtml += itemHtml;
+    }
+  }
+  
+  if (issueCount === 0) {
+    const emptyMsg = '<p class="text-sm text-text-gray font-semibold">해당 주간에 등록된 이슈가 없습니다.</p>';
+    if(weekIssuesContainer) weekIssuesContainer.innerHTML = emptyMsg;
+    if(mgmtIssuesContainer) mgmtIssuesContainer.innerHTML = emptyMsg;
+  } else {
+    if(weekIssuesContainer) weekIssuesContainer.innerHTML = dashHtml;
+    if(mgmtIssuesContainer) mgmtIssuesContainer.innerHTML = mgmtHtml;
+  }
+}
+
+function deleteIssue(dateStr) {
+  if(confirm('이슈를 삭제하시겠습니까?')) {
+    delete issues[dateStr];
+    localStorage.setItem('clinic_issues', JSON.stringify(issues));
+    displayIssues(); 
+  }
+}
+
+// ★ DATA SAVING LOGIC ★
+function saveDataFromController() {
+  const dateKey = document.getElementById('ctrl-date-picker').value;
+  if(!dateKey) return;
+
+  let data = getEmptyData();
+  for(let i=0; i<7; i++) {
+    data.doctors[i] = {
+      rev: getFlt(`in-rev-${i}`), target: getFlt(`in-target-${i}`),
+      res: getInt(`in-res-${i}`), vis: getInt(`in-vis-${i}`), walk: getInt(`in-walk-${i}`),
+      cat: getInt(`in-cat-${i}`), lens: getInt(`in-lens-${i}`), ext: getInt(`in-ext-${i}`),
+      smt: getInt(`in-smt-${i}`), ret: getInt(`in-ret-${i}`), fem: getInt(`in-fem-${i}`),
+      ipl: getInt(`in-ipl-${i}`), etc: getInt(`in-etc-${i}`)
+    };
+  }
+  data.summary = {
+    am: getInt('ctrl-pat-am'), pm: getInt('ctrl-pat-pm'), newPat: getInt('ctrl-pat-new'),
+    targetTotal: getFlt('ctrl-target-total'), cov: getFlt('ctrl-rev-cov'), noncov: getFlt('ctrl-rev-noncov')
+  };
+  for(let i=0; i<6; i++) {
+    data.channels[i] = { v: getInt(`ctrl-ch-${i}`), b: getInt(`ctrl-mkt-${i}`) };
+  }
+
+  clinicData[dateKey] = data;
+  localStorage.setItem('clinic_app_data', JSON.stringify(clinicData));
+  
+  showToast("저장 완료", "일일 데이터가 브라우저에 안전하게 누적되었습니다.");
+  refreshAllViews();
+}
+
+// ★ AGGREGATION LOGIC ★
+function getAggregatedData(monthStr) {
+  let agg = getEmptyData();
+  for (const [dateKey, dayData] of Object.entries(clinicData)) {
+    if (dateKey.startsWith(monthStr)) {
+      for(let i=0; i<7; i++) {
+        agg.doctors[i].rev += dayData.doctors[i].rev || 0;
+        agg.doctors[i].target += dayData.doctors[i].target || 0;
+        agg.doctors[i].res += dayData.doctors[i].res || 0;
+        agg.doctors[i].vis += dayData.doctors[i].vis || 0;
+        agg.doctors[i].walk += dayData.doctors[i].walk || 0;
+        agg.doctors[i].cat += dayData.doctors[i].cat || 0;
+        agg.doctors[i].lens += dayData.doctors[i].lens || 0;
+        agg.doctors[i].ext += dayData.doctors[i].ext || 0;
+        agg.doctors[i].smt += dayData.doctors[i].smt || 0;
+        agg.doctors[i].ret += dayData.doctors[i].ret || 0;
+        agg.doctors[i].fem += dayData.doctors[i].fem || 0;
+        agg.doctors[i].ipl += dayData.doctors[i].ipl || 0;
+        agg.doctors[i].etc += dayData.doctors[i].etc || 0;
+      }
+      agg.summary.am += dayData.summary.am || 0;
+      agg.summary.pm += dayData.summary.pm || 0;
+      agg.summary.newPat += dayData.summary.newPat || 0;
+      agg.summary.targetTotal += dayData.summary.targetTotal || 0;
+      agg.summary.cov += dayData.summary.cov || 0;
+      agg.summary.noncov += dayData.summary.noncov || 0;
+      for(let i=0; i<6; i++) {
+        agg.channels[i].v += dayData.channels[i].v || 0;
+        agg.channels[i].b += dayData.channels[i].b || 0;
+      }
+    }
+  }
+  return agg;
+}
+
+// ★ UI UPDATERS ★
+function loadDataToController() {
+  const dateKey = document.getElementById('ctrl-date-picker').value;
+  const data = clinicData[dateKey] || getEmptyData();
+  
+  for(let i=0; i<7; i++) {
+    document.getElementById(`in-rev-${i}`).value = data.doctors[i].rev || '';
+    document.getElementById(`in-target-${i}`).value = data.doctors[i].target || '';
+    document.getElementById(`in-res-${i}`).value = data.doctors[i].res || '';
+    document.getElementById(`in-vis-${i}`).value = data.doctors[i].vis || '';
+    document.getElementById(`in-walk-${i}`).value = data.doctors[i].walk || '';
+    document.getElementById(`in-cat-${i}`).value = data.doctors[i].cat || '';
+    document.getElementById(`in-lens-${i}`).value = data.doctors[i].lens || '';
+    document.getElementById(`in-ext-${i}`).value = data.doctors[i].ext || '';
+    document.getElementById(`in-smt-${i}`).value = data.doctors[i].smt || '';
+    document.getElementById(`in-ret-${i}`).value = data.doctors[i].ret || '';
+    document.getElementById(`in-fem-${i}`).value = data.doctors[i].fem || '';
+    document.getElementById(`in-ipl-${i}`).value = data.doctors[i].ipl || '';
+    document.getElementById(`in-etc-${i}`).value = data.doctors[i].etc || '';
+  }
+  document.getElementById('ctrl-pat-am').value = data.summary.am || '';
+  document.getElementById('ctrl-pat-pm').value = data.summary.pm || '';
+  document.getElementById('ctrl-pat-new').value = data.summary.newPat || '';
+  document.getElementById('ctrl-target-total').value = data.summary.targetTotal || '';
+  document.getElementById('ctrl-rev-cov').value = data.summary.cov || '';
+  document.getElementById('ctrl-rev-noncov').value = data.summary.noncov || '';
+
+  for(let i=0; i<6; i++) {
+    document.getElementById(`ctrl-ch-${i}`).value = data.channels[i].v || '';
+    document.getElementById(`ctrl-mkt-${i}`).value = data.channels[i].b || '';
+  }
+}
+
+function updateDashboardAndReport(data) {
+  let arrRev = []; let docTotalSurgeries = [];
+  let surSums = { cat:0, lens:0, ext:0, smt:0, ret:0, fem:0, ipl:0, etc:0 };
+  let patSums = { res:0, vis:0, walk:0, treated:0, weighted:0 };
+  let totalRev = 0;
+
+  for(let i=0; i<7; i++) {
+    let d = data.doctors[i];
+    arrRev.push(d.rev); totalRev += d.rev;
+    
+    let docSurgTotal = d.cat + d.lens + d.ext + d.smt + d.ret + d.fem + d.ipl + d.etc;
+    docTotalSurgeries.push(docSurgTotal);
+
+    surSums.cat += d.cat; surSums.lens += d.lens; surSums.ext += d.ext; surSums.smt += d.smt;
+    surSums.ret += d.ret; surSums.fem += d.fem; surSums.ipl += d.ipl; surSums.etc += d.etc;
+
+    let treated = d.vis + d.walk;
+    patSums.res += d.res; patSums.vis += d.vis; patSums.walk += d.walk; patSums.treated += treated;
+    
+    let noShowRate = d.res > 0 ? ((d.res - d.vis) / d.res * 100).toFixed(1) : 0;
+    let resRate = treated > 0 ? (d.vis / treated * 100).toFixed(1) : 0;
+    
+    let weighted = treated + (d.cat*4) + (d.lens*4) + (d.ext*5) + (d.smt*6) + (d.ret*1) + (d.fem*2) + (d.ipl*2) + (d.etc*3);
+    patSums.weighted += weighted;
+
+    let pct = d.target > 0 ? (d.rev/d.target)*100 : 0;
+    let isWarning = d.target > 0 && pct < 80;
+    
+    setTxt(`dash-inc-target-${i}`, getVal(d.target) + getUnit(d.target));
+    setTxt(`dash-inc-rev-${i}`, getVal(d.rev) + getUnit(d.rev));
+    setTxt(`dash-inc-pct-txt-${i}`, pct.toFixed(1) + '%');
+    
+    const pctTxtEl = document.getElementById(`dash-inc-pct-txt-${i}`);
+    if(pctTxtEl) pctTxtEl.style.color = isWarning ? COLORS.burgundy : DOCTORS[i].color;
+    
+    const barEl = document.getElementById(`dash-inc-bar-${i}`);
+    if(barEl) {
+        barEl.style.width = Math.min(pct, 100) + '%';
+        barEl.style.backgroundColor = isWarning ? COLORS.burgundy : DOCTORS[i].color;
+    }
+
+    const keys = ['cat','lens','ext','smt','ret','fem','ipl','etc'];
+    const vals = [d.cat, d.lens, d.ext, d.smt, d.ret, d.fem, d.ipl, d.etc];
+    keys.forEach((key, idx) => {
+      let td = document.getElementById(`tbl-${key}-${i}`);
+      let rd = document.getElementById(`rep-${key}-${i}`);
+      if(td) td.innerText = vals[idx];
+      if(rd) rd.innerText = vals[idx];
+    });
+
+    setTxt(`rep-res-${i}`, d.res); setTxt(`rep-vis-${i}`, d.vis); setTxt(`rep-walk-${i}`, d.walk);
+    setTxt(`rep-noshow-${i}`, noShowRate); setTxt(`rep-resrate-${i}`, resRate);
+    setTxt(`rep-treated-${i}`, treated); setTxt(`rep-weighted-${i}`, weighted);
+  }
+
+  const keys = ['cat','lens','ext','smt','ret','fem','ipl','etc'];
+  keys.forEach(key => {
+    setTxt(`tbl-${key}-sum`, formatNum(surSums[key]));
+    setTxt(`rep-${key}-sum`, formatNum(surSums[key]));
+  });
+
+  setTxt(`rep-res-sum`, formatNum(patSums.res));
+  setTxt(`rep-vis-sum`, formatNum(patSums.vis));
+  setTxt(`rep-walk-sum`, formatNum(patSums.walk));
+  setTxt(`rep-noshow-sum`, patSums.res > 0 ? ((patSums.res - patSums.vis)/patSums.res*100).toFixed(1) : 0);
+  setTxt(`rep-resrate-sum`, patSums.treated > 0 ? (patSums.vis / patSums.treated * 100).toFixed(1) : 0);
+  setTxt(`rep-treated-sum`, formatNum(patSums.treated));
+  setTxt(`rep-weighted-sum`, formatNum(patSums.weighted));
+
+  let totalPat = data.summary.am + data.summary.pm;
+  setTxt('rep-pat-am', formatNum(data.summary.am));
+  setTxt('rep-pat-pm', formatNum(data.summary.pm));
+  setTxt('rep-pat-total', formatNum(totalPat));
+  setTxt('rep-pat-new', formatNum(data.summary.newPat));
+  setTxt('rep-pat-new-pct', `(${totalPat>0 ? (data.summary.newPat/totalPat*100).toFixed(1) : 0}%)`);
+
+  setTxt('kpi-total-revenue', getVal(totalRev));
+  setTxt('kpi-total-revenue-unit', getUnit(totalRev));
+  setTxt('dash-pat-total', formatNum(totalPat));
+  setTxt('kpi-total-patients', formatNum(totalPat));
+  setTxt('kpi-rev-per-patient', totalPat > 0 ? (totalRev / totalPat).toFixed(1) : 0);
+
+  let dailyTot = data.summary.cov + data.summary.noncov;
+  let dailyTotTxt = formatNum(dailyTot) + '<span class="text-xs lg:text-sm font-semibold ml-1">만</span>';
+  let dailyNcovTxt = formatNum(data.summary.noncov) + '<span class="text-xs lg:text-sm font-semibold ml-1">만</span>';
+  if (dailyTot >= 10000) dailyTotTxt = (dailyTot/10000).toFixed(1) + '<span class="text-xs lg:text-sm font-semibold ml-1">억</span>';
+  if (data.summary.noncov >= 10000) dailyNcovTxt = (data.summary.noncov/10000).toFixed(1) + '<span class="text-xs lg:text-sm font-semibold ml-1">억</span>';
+
+  setTxt('dash-daily-total', dailyTotTxt);
+  setTxt('dash-daily-noncov', dailyNcovTxt);
+  setTxt('kpi-non-covered-pct', dailyTot > 0 ? (data.summary.noncov / dailyTot * 100).toFixed(1) : 0);
+
+  let chVisits = []; let totalVisits = 0;
+  let chBudgets = []; let mktBudget = 0;
+  let chCpas = [];
+
+  for(let i=0; i<6; i++) {
+    chVisits.push(data.channels[i].v); totalVisits += data.channels[i].v;
+    chBudgets.push(data.channels[i].b); mktBudget += data.channels[i].b;
+    chCpas.push(data.channels[i].v > 0 ? (data.channels[i].b / data.channels[i].v).toFixed(1) : 0);
+  }
+
+  setTxt('dash-mkt-budget', formatNum(mktBudget));
+  setTxt('dash-mkt-cpa', totalVisits > 0 ? (mktBudget / totalVisits).toFixed(1) : 0);
+
+  // 차트 업데이트
+  if(charts.revenueBar) { charts.revenueBar.data.datasets[0].data = arrRev; charts.revenueBar.update(); }
+  if(charts.surgeryDoctor) { charts.surgeryDoctor.data.datasets[0].data = docTotalSurgeries; charts.surgeryDoctor.update(); }
+  if(charts.channelPie) { charts.channelPie.data.datasets[0].data = chVisits; charts.channelPie.update(); }
+  if(charts.patientTrend) {
+      charts.patientTrend.data.datasets[0].data[0] = totalPat - data.summary.newPat; 
+      charts.patientTrend.data.datasets[1].data[0] = data.summary.newPat; 
+      charts.patientTrend.update();
+  }
+  if(charts.cpa) { charts.cpa.data.datasets[0].data = chCpas; charts.cpa.update(); }
+}
+
+function refreshAllViews() {
+  loadDataToController();
+  
+  let targetData;
+  if(currentMode === 'monthly') {
+    const monthStr = document.getElementById('dash-month-select').value;
+    targetData = getAggregatedData(monthStr);
+  } else {
+    const dateStr = document.getElementById('dash-date-select').value;
+    targetData = clinicData[dateStr] || getEmptyData();
+  }
+  
+  updateDashboardAndReport(targetData);
+  displayIssues();
+}
+
+
+function initDashboard() {
+  const docGrid = document.getElementById('ctrl-doc-detail-grid');
+  const incContainer = document.getElementById('incentive-container');
+  
+  docGrid.innerHTML = ''; incContainer.innerHTML = '';
+  
+  DOCTORS.forEach((doc, i) => {
+    // 엑셀 스타일 그리드 입력 폼
+    docGrid.innerHTML += `
+      <tr class="hover:bg-appBg transition-colors group">
+        <td class="excel-td pl-2 text-left font-extrabold text-text-dark whitespace-nowrap"><span class="doctor-dot mr-2" style="background:${doc.color}"></span>${doc.name}</td>
+        <td class="excel-td bg-brand-50/30 group-hover:bg-brand-50/50"><input type="number" step="1" id="in-rev-${i}" class="excel-input text-brand-600 font-extrabold" placeholder="0"></td>
+        <td class="excel-td bg-brand-50/30 group-hover:bg-brand-50/50 pr-2 border-r border-border-light"><input type="number" step="1" id="in-target-${i}" class="excel-input text-brand-600 font-bold" placeholder="0"></td>
+        <td class="excel-td pl-2 bg-cyan-50/30 group-hover:bg-cyan-50/50"><input type="number" id="in-res-${i}" class="excel-input" placeholder="0"></td>
+        <td class="excel-td bg-cyan-50/30 group-hover:bg-cyan-50/50"><input type="number" id="in-vis-${i}" class="excel-input text-accent-cyan font-bold" placeholder="0"></td>
+        <td class="excel-td bg-cyan-50/30 group-hover:bg-cyan-50/50 pr-2 border-r border-border-light"><input type="number" id="in-walk-${i}" class="excel-input" placeholder="0"></td>
+        <td class="excel-td pl-2"><input type="number" id="in-cat-${i}" class="excel-input" placeholder="0"></td>
+        <td class="excel-td"><input type="number" id="in-lens-${i}" class="excel-input" placeholder="0"></td>
+        <td class="excel-td"><input type="number" id="in-ext-${i}" class="excel-input" placeholder="0"></td>
+        <td class="excel-td"><input type="number" id="in-smt-${i}" class="excel-input" placeholder="0"></td>
+        <td class="excel-td"><input type="number" id="in-ret-${i}" class="excel-input" placeholder="0"></td>
+        <td class="excel-td"><input type="number" id="in-fem-${i}" class="excel-input" placeholder="0"></td>
+        <td class="excel-td"><input type="number" id="in-ipl-${i}" class="excel-input" placeholder="0"></td>
+        <td class="excel-td pr-2"><input type="number" id="in-etc-${i}" class="excel-input" placeholder="0"></td>
+      </tr>
+    `;
+      
+    incContainer.innerHTML += `
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+        <div class="w-full sm:w-24 text-xs font-extrabold text-text-dark flex items-center gap-2"><span class="doctor-dot" style="background:${doc.color}"></span>${doc.name}</div>
+        <div class="flex-1 w-full">
+          <div class="flex justify-between text-[11px] mb-1.5 font-bold"><span class="text-text-light">Target <span id="dash-inc-target-${i}">0</span></span><span id="dash-inc-pct-txt-${i}" style="color:${doc.color}">0%</span></div>
+          <div class="progress-bar"><div id="dash-inc-bar-${i}" class="progress-fill" style="background-color:${doc.color}; width:0%"></div></div>
+        </div>
+        <div class="text-sm font-extrabold w-full sm:w-20 text-right sm:text-right text-text-dark td-number mt-1 sm:mt-0"><span id="dash-inc-rev-${i}">0</span></div>
+      </div>`;
+  });
+
+  buildReportTable();
+
+  const yAxisFormat = { callback: function(v) { return v >= 10000 ? (v/10000).toFixed(1) + '억' : v.toLocaleString() + '만'; } };
+
+  charts.revenueBar = new Chart(document.getElementById('revenueBarChart'), {
+    type: 'bar', data: { labels: DOCTORS.map(d=>d.name), datasets: [
+      { label: 'Revenue', data: DOCTORS.map(d=>0), backgroundColor: COLORS.brand, barPercentage: 0.4, borderRadius: 8, borderSkipped: false }
+    ]}, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ...cleanGrid, ticks:yAxisFormat}, x:{...hiddenGrid, ticks:{font:{size:10}}}} }
+  });
+
+  charts.surgeryDoctor = new Chart(document.getElementById('surgeryDoctorChart'), {
+    type: 'bar', data: { labels: DOCTORS.map(d=>d.name), datasets: [
+      { label: '총 수술 건수', data: DOCTORS.map(d=>0), backgroundColor: DOCTORS.map(d=>d.color), borderRadius: 6, borderSkipped: false, barPercentage: 0.5 }
+    ]}, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{...hiddenGrid, ticks:{font:{size:10}}},y:{beginAtZero:true, ...cleanGrid}} }
+  });
+  
+  charts.patientTrend = new Chart(document.getElementById('patientTrendChart'), {
+    type: 'line', data: { labels: ['현재 데이터'], datasets: [
+      { label: '재진', data: [0], borderColor: COLORS.navy, backgroundColor: 'rgba(30,30,45,0.05)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2 },
+      { label: '신환', data: [0], borderColor: COLORS.brand, backgroundColor: 'rgba(67,97,238,0.1)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2 },
+    ]}, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top', labels:{usePointStyle:true, font:{weight:'bold', size:10}}}}, scales:{x:{...hiddenGrid},y:{beginAtZero:true, ...cleanGrid}} }
+  });
+
+  charts.channelPie = new Chart(document.getElementById('channelPieChart'), {
+    type: 'doughnut', data: { labels: CHANNELS, datasets: [{ data: [0,0,0,0,0,0], backgroundColor: CH_COLORS, borderWidth: 0 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{usePointStyle:true, padding:15, font:{size:10, weight:'bold'}}}}, cutout:'70%' }
+  });
+
+  charts.cpa = new Chart(document.getElementById('cpaChart'), {
+    type: 'bar', data: { labels: CHANNELS, datasets: [{ data: [0,0,0,0,0,0], backgroundColor: CH_COLORS, borderRadius: 4, borderSkipped: false, barPercentage: 0.6 }] },
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, ...cleanGrid},y:{...hiddenGrid, ticks:{font:{size:10}}}} }
+  });
+
+  setTimeframe('monthly'); // This calls refreshAllViews automatically
+}
+
+function buildReportTable() {
+  const t_dash = document.getElementById('surgery-table-body');
+  const t_rep = document.getElementById('daily-report-body');
+  
+  const surgItems = [
+    { key: 'cat', label: '백내장' }, { key: 'ipl', label: 'IPL' }, { key: 'lens', label: '렌즈삽입' },
+    { key: 'ext', label: '엑스트라' }, { key: 'smt', label: '스마트' }, { key: 'ret', label: '망막주사' },
+    { key: 'fem', label: '펨토' }, { key: 'etc', label: '기타수술' },
+  ];
+  
+  // Dashboard Mini Table
+  let dashHtml = '';
+  surgItems.forEach(item => {
+    dashHtml += `<tr><td><div class="font-bold text-text-dark text-[11px] lg:text-xs">${item.label}</div></td>`;
+    for(let i=0; i<7; i++) { dashHtml += `<td id="tbl-${item.key}-${i}" class="td-number text-[11px] lg:text-xs">0</td>`; }
+    dashHtml += `<td id="tbl-${item.key}-sum" class="td-number text-[11px] lg:text-xs text-brand-500">0</td></tr>`;
+  });
+  t_dash.innerHTML = dashHtml;
+
+  // Daily Report Table
+  let repHtml = '';
+  const patItems = [
+    { key: 'res', label: '예약', class: 'bg-brand-50' },
+    { key: 'vis', label: '내원', class: 'bg-brand-50' },
+    { key: 'walk', label: '비예약', class: '' },
+    { key: 'noshow', label: '부도율(%)', class: '' },
+    { key: 'resrate', label: '예약율(%)', class: '' },
+    { key: 'treated', label: '진료환자', class: 'bg-brand-50' }
+  ];
+
+  patItems.forEach(item => {
+    repHtml += `<tr class="${item.class}"><td>${item.label}</td>`;
+    for(let i=0; i<7; i++) { repHtml += `<td id="rep-${item.key}-${i}">0</td>`; }
+    repHtml += `<td id="rep-${item.key}-sum" class="td-total">0</td></tr>`;
+  });
+
+  surgItems.forEach(item => {
+    repHtml += `<tr><td>${item.label}</td>`;
+    for(let i=0; i<7; i++) { repHtml += `<td id="rep-${item.key}-${i}">0</td>`; }
+    repHtml += `<td id="rep-${item.key}-sum" class="td-total">0</td></tr>`;
+  });
+
+  repHtml += `<tr class="border-t-2 border-brand-900 bg-brand-50"><td class="font-extrabold text-brand-900">보정환자수</td>`;
+  for(let i=0; i<7; i++) { repHtml += `<td id="rep-weighted-${i}" class="font-bold text-brand-900">0</td>`; }
+  repHtml += `<td id="rep-weighted-sum" class="font-extrabold text-brand-900 text-base">0</td></tr>`;
+  
+  t_rep.innerHTML = repHtml;
+}
+
+function switchView(viewId) {
+  document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.m-nav-btn').forEach(el => el.classList.remove('active'));
+  
+  document.getElementById('view-dashboard').style.display = 'none';
+  document.getElementById('view-management').style.display = 'none';
+  document.getElementById('view-daily-report').style.display = 'none';
+
+  if(viewId === 'dashboard') {
+    const desktopBtn = document.querySelector('.sidebar .d-nav-btn[data-target="dashboard"]');
+    if(desktopBtn) desktopBtn.classList.add('active');
+    const mobileBtn = document.querySelector('.m-nav-btn[data-target="dashboard"]');
+    if(mobileBtn) mobileBtn.classList.add('active');
+    document.getElementById('view-dashboard').style.display = 'block';
+  } else if (viewId === 'management') {
+    const desktopBtn = document.querySelector('.sidebar .d-nav-btn[data-target="management"]');
+    if(desktopBtn) desktopBtn.classList.add('active');
+    const mobileBtn = document.querySelector('.m-nav-btn[data-target="management"]');
+    if(mobileBtn) mobileBtn.classList.add('active');
+    document.getElementById('view-management').style.display = 'block';
+  } else if (viewId === 'daily-report') {
+    const desktopBtn = document.querySelector('.sidebar .d-nav-btn[data-target="daily-report"]');
+    if(desktopBtn) desktopBtn.classList.add('active');
+    const mobileBtn = document.querySelector('.m-nav-btn[data-target="daily-report"]');
+    if(mobileBtn) mobileBtn.classList.add('active');
+    document.getElementById('view-daily-report').style.display = 'block';
+  }
+  window.scrollTo({top:0});
+}
+
+function navigateAndScroll(id) {
+  switchView('dashboard');
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if(el) {
+      const yOffset = window.innerWidth < 1024 ? 60 : 100;
+      window.scrollTo({top: el.getBoundingClientRect().top + window.pageYOffset - yOffset, behavior: 'smooth'});
+    }
+  }, 50);
+}
+
+window.onload = initDashboard;
+</script>
+</body>
+</html>
