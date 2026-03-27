@@ -119,7 +119,7 @@ tailwind.config = {
     .m-nav-btn.active { color: #4361EE; }
     .m-nav-btn.active .material-symbols-rounded { font-variation-settings: 'FILL' 1; transform: translateY(-2px); }
     
-    #view-dashboard, #view-management, #view-daily-report { padding: 16px !important; gap: 16px !important; }
+    #view-dashboard, #view-management, #view-daily-report, #view-welfare { padding: 16px !important; gap: 16px !important; }
     .widget-card { padding: 20px; border-radius: 16px; }
     .topbar { padding: 12px 16px; flex-wrap: wrap; }
     .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -160,7 +160,10 @@ tailwind.config = {
       <span class="material-symbols-rounded" style="font-size:22px">edit_document</span><span class="nav-label">데이터 입력</span>
       <span class="w-2 h-2 rounded-full bg-brand-500 ml-auto animate-pulse"></span>
     </div>
-    
+    <div class="nav-item d-nav-btn" data-target="welfare" onclick="switchView('welfare')">
+      <span class="material-symbols-rounded" style="font-size:22px">volunteer_activism</span><span class="nav-label">사내근로복지기금</span>
+    </div>
+
     <div class="h-px bg-border-light mx-6 my-6"></div>
     <div class="nav-section-label text-[10px] uppercase tracking-widest text-text-light font-bold px-7 mb-3">Quick Links</div>
     <div class="nav-item" onclick="navigateAndScroll('revenue')"><span class="material-symbols-rounded" style="font-size:20px">payments</span><span class="nav-label">매출 현황</span></div>
@@ -183,6 +186,9 @@ tailwind.config = {
   </div>
   <div class="m-nav-btn" data-target="management" onclick="switchView('management')">
     <span class="material-symbols-rounded">edit_document</span><span class="relative">입력<span class="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span></span>
+  </div>
+  <div class="m-nav-btn" data-target="welfare" onclick="switchView('welfare')">
+    <span class="material-symbols-rounded">volunteer_activism</span><span>복지기금</span>
   </div>
 </nav>
 
@@ -424,9 +430,15 @@ tailwind.config = {
         <h1 class="text-2xl lg:text-3xl font-extrabold text-text-dark font-heading">일일 진료 보고서</h1>
         <p class="text-sm font-bold text-brand-500 mt-2" id="report-date-title"></p>
       </div>
-      <button onclick="window.print()" class="bg-white border border-border-light hover:bg-gray-50 text-text-dark px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2">
-        <span class="material-symbols-rounded" style="font-size:18px">print</span> 보고서 출력
-      </button>
+      <div class="flex items-center gap-3">
+        <div class="custom-date-picker">
+          <span class="material-symbols-rounded custom-date-icon">calendar_today</span>
+          <input type="date" id="report-date-picker">
+        </div>
+        <button onclick="window.print()" class="bg-white border border-border-light hover:bg-gray-50 text-text-dark px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2">
+          <span class="material-symbols-rounded" style="font-size:18px">print</span> 보고서 출력
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -589,8 +601,233 @@ tailwind.config = {
         </div>
       </div>
 
+      <!-- ★ 5. 사내근로복지기금 입력 섹션 ★ -->
+      <div class="lg:col-span-3 widget-card p-4 md:p-6">
+        <h3 class="font-extrabold text-sm lg:text-base text-text-dark mb-2 border-b border-border-light pb-3 flex items-center gap-2">
+          <span class="material-symbols-rounded text-accent-purple">volunteer_activism</span> 5. 사내근로복지기금 지출 입력
+        </h3>
+        <p class="text-xs font-bold text-text-light mb-4">월 단위로 기금 지출 내역을 입력합니다. 저장 시 복지기금 대시보드에 자동 반영됩니다.</p>
+
+        <!-- 월 선택 + 수입 -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          <div class="input-group">
+            <label class="input-label">기준 월</label>
+            <div class="custom-date-picker w-full">
+              <span class="material-symbols-rounded custom-date-icon">calendar_month</span>
+              <input type="month" id="wf-input-month">
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="input-label text-accent-green">수입 (만원)</label>
+            <input type="number" id="wf-input-income" class="input-field text-right" placeholder="0">
+          </div>
+        </div>
+
+        <!-- 카테고리별 지출 입력 -->
+        <div class="mb-4">
+          <p class="text-[11px] font-extrabold text-text-gray uppercase tracking-widest mb-3">카테고리별 지출 (만원)</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div class="input-group">
+              <label class="input-label flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#4361EE"></span>기숙사</label>
+              <input type="number" id="wf-input-cat-0" class="input-field text-right" placeholder="0">
+            </div>
+            <div class="input-group">
+              <label class="input-label flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#7209B7"></span>인센티브</label>
+              <input type="number" id="wf-input-cat-1" class="input-field text-right" placeholder="0">
+            </div>
+            <div class="input-group">
+              <label class="input-label flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#4CC9F0"></span>체력/복지</label>
+              <input type="number" id="wf-input-cat-2" class="input-field text-right" placeholder="0">
+            </div>
+            <div class="input-group">
+              <label class="input-label flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#F77F00"></span>주택담보</label>
+              <input type="number" id="wf-input-cat-3" class="input-field text-right" placeholder="0">
+            </div>
+            <div class="input-group">
+              <label class="input-label flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#F72585"></span>소개비</label>
+              <input type="number" id="wf-input-cat-4" class="input-field text-right" placeholder="0">
+            </div>
+            <div class="input-group">
+              <label class="input-label flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#10B981"></span>경조/포상</label>
+              <input type="number" id="wf-input-cat-5" class="input-field text-right" placeholder="0">
+            </div>
+            <div class="input-group">
+              <label class="input-label flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#94A3B8"></span>기타</label>
+              <input type="number" id="wf-input-cat-6" class="input-field text-right" placeholder="0">
+            </div>
+            <div class="input-group flex items-end">
+              <div class="w-full bg-gray-50 border border-border-light rounded-xl px-4 py-2.5 text-right">
+                <p class="text-[10px] font-bold text-text-light mb-0.5">합계</p>
+                <p class="text-sm font-extrabold text-accent-pink font-heading" id="wf-input-cat-total">0 만원</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 상세 내역 입력 (건별) -->
+        <div class="mb-4">
+          <p class="text-[11px] font-extrabold text-text-gray uppercase tracking-widest mb-3">상세 내역 등록 (선택)</p>
+          <div class="grid grid-cols-12 gap-2 mb-2">
+            <div class="col-span-2 input-group"><label class="input-label">날짜(일)</label><input type="text" id="wf-detail-date" class="input-field text-center" placeholder="03.15"></div>
+            <div class="col-span-4 input-group"><label class="input-label">내역</label><input type="text" id="wf-detail-desc" class="input-field" placeholder="김혜진 체력단련비"></div>
+            <div class="col-span-2 input-group">
+              <label class="input-label">카테고리</label>
+              <select id="wf-detail-cat" class="input-field">
+                <option value="기숙사">기숙사</option>
+                <option value="인센티브">인센티브</option>
+                <option value="체력/복지">체력/복지</option>
+                <option value="주택담보">주택담보</option>
+                <option value="소개비">소개비</option>
+                <option value="경조/포상">경조/포상</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <div class="col-span-2 input-group"><label class="input-label">금액(만)</label><input type="number" id="wf-detail-amount" class="input-field text-right" placeholder="0"></div>
+            <div class="col-span-2 input-group flex items-end">
+              <button onclick="addWfDetail()" class="w-full bg-accent-purple hover:bg-purple-700 text-white px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1">
+                <span class="material-symbols-rounded" style="font-size:16px">add</span> 추가
+              </button>
+            </div>
+          </div>
+          <div class="max-h-[200px] overflow-y-auto border border-border-light rounded-xl" id="wf-detail-list-wrapper">
+            <table class="clean-table text-xs">
+              <thead><tr><th>날짜</th><th>내역</th><th>카테고리</th><th class="td-right">금액</th><th class="w-10"></th></tr></thead>
+              <tbody id="wf-detail-list"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 저장 버튼 -->
+        <div class="flex justify-end">
+          <button onclick="saveWelfareData()" class="bg-accent-purple hover:bg-purple-700 text-white px-8 py-3.5 rounded-xl font-bold text-sm transition-all shadow-float flex items-center gap-2 transform hover:-translate-y-1">
+            <span class="material-symbols-rounded" style="font-size:20px">save</span> 복지기금 데이터 저장
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
+
+  <!-- ★ 사내근로복지기금 대시보드 뷰 ★ -->
+  <div id="view-welfare" class="p-4 md:p-8 lg:p-10 space-y-6 lg:space-y-8 max-w-[1600px] mx-auto w-full hidden pb-24 lg:pb-10 animate-in">
+
+    <!-- 헤더 -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <h1 class="text-2xl lg:text-3xl font-extrabold text-text-dark font-heading">사내근로복지기금 현황</h1>
+        <p class="text-sm font-bold text-text-gray mt-2">천안김안과사내근로복지기금법인 · 설립 2021.11.18</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="custom-date-picker">
+          <span class="material-symbols-rounded custom-date-icon">calendar_month</span>
+          <input type="month" id="welfare-month-select">
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI 카드 4개 -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div class="widget-card pl-5 lg:pl-8 p-5 lg:p-6">
+        <div class="card-accent-line bg-brand-500 hidden lg:block"></div>
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-[10px] lg:text-xs font-bold text-text-light mb-1">기금 잔액</p>
+            <h3 class="text-xl lg:text-[28px] font-extrabold text-text-dark font-heading" id="wf-balance">0</h3>
+            <p class="text-[10px] font-bold text-text-light mt-1" id="wf-balance-unit">원</p>
+          </div>
+          <div class="icon-box w-8 h-8 lg:w-12 lg:h-12 bg-brand-50 text-brand-500"><span class="material-symbols-rounded font-variation-settings-fill-1 text-sm lg:text-2xl">account_balance</span></div>
+        </div>
+      </div>
+      <div class="widget-card pl-5 lg:pl-8 p-5 lg:p-6">
+        <div class="card-accent-line bg-accent-pink hidden lg:block"></div>
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-[10px] lg:text-xs font-bold text-text-light mb-1" id="wf-expense-label">이번 달 지출</p>
+            <h3 class="text-xl lg:text-[28px] font-extrabold text-accent-pink font-heading" id="wf-month-expense">0</h3>
+            <p class="text-[10px] font-bold text-text-light mt-1">만원</p>
+          </div>
+          <div class="icon-box w-8 h-8 lg:w-12 lg:h-12 bg-pink-50 text-accent-pink"><span class="material-symbols-rounded font-variation-settings-fill-1 text-sm lg:text-2xl">trending_down</span></div>
+        </div>
+      </div>
+      <div class="widget-card pl-5 lg:pl-8 p-5 lg:p-6">
+        <div class="card-accent-line bg-accent-green hidden lg:block"></div>
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-[10px] lg:text-xs font-bold text-text-light mb-1" id="wf-income-label">이번 달 수입</p>
+            <h3 class="text-xl lg:text-[28px] font-extrabold text-accent-green font-heading" id="wf-month-income">0</h3>
+            <p class="text-[10px] font-bold text-text-light mt-1">만원</p>
+          </div>
+          <div class="icon-box w-8 h-8 lg:w-12 lg:h-12 bg-green-50 text-accent-green"><span class="material-symbols-rounded font-variation-settings-fill-1 text-sm lg:text-2xl">trending_up</span></div>
+        </div>
+      </div>
+      <div class="widget-card pl-5 lg:pl-8 p-5 lg:p-6">
+        <div class="card-accent-line bg-accent-orange hidden lg:block"></div>
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-[10px] lg:text-xs font-bold text-text-light mb-1">연간 누적 지출</p>
+            <h3 class="text-xl lg:text-[28px] font-extrabold text-accent-orange font-heading" id="wf-year-expense">0</h3>
+            <p class="text-[10px] font-bold text-text-light mt-1">만원</p>
+          </div>
+          <div class="icon-box w-8 h-8 lg:w-12 lg:h-12 bg-orange-50 text-accent-orange"><span class="material-symbols-rounded font-variation-settings-fill-1 text-sm lg:text-2xl">receipt_long</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 차트 영역: 카테고리별 비중 + 월별 추이 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+      <!-- 카테고리별 지출 비중 도넛 -->
+      <div class="widget-card">
+        <div class="flex justify-between items-center mb-4 lg:mb-6">
+          <h3 class="font-extrabold text-sm lg:text-base text-text-dark">카테고리별 지출 비중</h3>
+          <div class="icon-box bg-purple-50 text-accent-purple"><span class="material-symbols-rounded font-variation-settings-fill-1" style="font-size:20px">donut_small</span></div>
+        </div>
+        <div class="flex flex-col lg:flex-row items-center gap-6">
+          <div class="w-full max-w-[260px] aspect-square mx-auto"><canvas id="wf-chart-category"></canvas></div>
+          <div class="flex-1 w-full" id="wf-category-legend"></div>
+        </div>
+      </div>
+      <!-- 월별 수입/지출 추이 -->
+      <div class="widget-card">
+        <div class="flex justify-between items-center mb-4 lg:mb-6">
+          <h3 class="font-extrabold text-sm lg:text-base text-text-dark">월별 수입 · 지출 추이</h3>
+          <div class="icon-box bg-cyan-50 text-accent-cyan"><span class="material-symbols-rounded font-variation-settings-fill-1" style="font-size:20px">bar_chart</span></div>
+        </div>
+        <div class="h-[280px] lg:h-[320px]"><canvas id="wf-chart-monthly"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 잔액 추이 라인 차트 -->
+    <div class="widget-card">
+      <div class="flex justify-between items-center mb-4 lg:mb-6">
+        <h3 class="font-extrabold text-sm lg:text-base text-text-dark">기금 잔액 추이</h3>
+        <div class="icon-box bg-brand-50 text-brand-500"><span class="material-symbols-rounded font-variation-settings-fill-1" style="font-size:20px">show_chart</span></div>
+      </div>
+      <div class="h-[240px] lg:h-[280px]"><canvas id="wf-chart-balance"></canvas></div>
+    </div>
+
+    <!-- 최근 지출 내역 테이블 -->
+    <div class="widget-card">
+      <div class="flex justify-between items-center mb-4 lg:mb-6">
+        <h3 class="font-extrabold text-sm lg:text-base text-text-dark">최근 지출 내역</h3>
+        <span class="text-xs font-bold text-text-light" id="wf-table-period"></span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="clean-table">
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>내역</th>
+              <th>카테고리</th>
+              <th class="td-right">금액</th>
+            </tr>
+          </thead>
+          <tbody id="wf-recent-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
 <div id="toast" class="fixed z-[100] flex items-center gap-3 bg-brand-900 text-white px-5 py-3 lg:px-6 lg:py-4 rounded-xl lg:rounded-2xl shadow-card transition-all duration-300 opacity-0 pointer-events-none bottom-[100px] left-1/2 -translate-x-1/2 translate-y-10 lg:bottom-10 lg:left-auto lg:right-10 lg:translate-x-10 lg:translate-y-0 w-max max-w-[90vw]">
@@ -614,6 +851,8 @@ document.getElementById('dash-month-select').value = todayMonthISO;
 document.getElementById('dash-date-select').value = todayISO;
 document.getElementById('ctrl-date-picker').value = todayISO;
 document.getElementById('in-issue-date').value = todayISO;
+document.getElementById('report-date-picker').value = todayISO;
+document.getElementById('wf-input-month').value = todayMonthISO;
 
 const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
 document.getElementById('dash-today-date').innerText = today.toLocaleDateString('ko-KR', options);
@@ -644,6 +883,8 @@ let currentMode = 'monthly';
 // ★ Local DB (Storage) ★
 let clinicData = JSON.parse(localStorage.getItem('clinic_app_data')) || {};
 let issues = JSON.parse(localStorage.getItem('clinic_issues')) || {};
+let welfareUserData = JSON.parse(localStorage.getItem('welfare_user_data')) || {};
+let wfTempDetails = []; // 현재 입력 중인 상세 내역 임시 저장
 
 // Empty Data Template
 function getEmptyData() {
@@ -720,8 +961,15 @@ function syncDateStatus() {
 
 // Data Change Listeners
 document.getElementById('dash-month-select').addEventListener('change', () => { syncDateStatus(); updateReportDateTitle(); refreshAllViews(); });
-document.getElementById('dash-date-select').addEventListener('change', () => { syncDateStatus(); updateReportDateTitle(); refreshAllViews(); });
+document.getElementById('dash-date-select').addEventListener('change', () => {
+  syncDateStatus(); updateReportDateTitle(); refreshAllViews();
+  // 대시보드 Daily 날짜 변경 시 보고서 날짜도 동기화
+  document.getElementById('report-date-picker').value = document.getElementById('dash-date-select').value;
+});
 document.getElementById('ctrl-date-picker').addEventListener('change', () => { loadDataToController(); });
+
+// ★ 일일 보고서 전용 날짜 변경 리스너
+document.getElementById('report-date-picker').addEventListener('change', () => { refreshDailyReport(); });
 
 // ★ ISSUES LOGIC ★
 function saveIssue() {
@@ -1010,7 +1258,7 @@ function updateDashboardAndReport(data) {
 
 function refreshAllViews() {
   loadDataToController();
-  
+
   let targetData;
   if(currentMode === 'monthly') {
     const monthStr = document.getElementById('dash-month-select').value;
@@ -1019,9 +1267,30 @@ function refreshAllViews() {
     const dateStr = document.getElementById('dash-date-select').value;
     targetData = clinicData[dateStr] || getEmptyData();
   }
-  
+
   updateDashboardAndReport(targetData);
   displayIssues();
+}
+
+// ★ 일일 보고서 전용 갱신 — 보고서 날짜 피커에서 선택한 날짜의 데이터로 보고서만 독립 갱신
+function refreshDailyReport() {
+  const dateStr = document.getElementById('report-date-picker').value;
+  if (!dateStr) return;
+
+  // 보고서 제목 업데이트
+  const d = new Date(dateStr);
+  const formatted = d.toLocaleDateString('ko-KR', options);
+  document.getElementById('report-date-title').innerText = `${formatted} 기준`;
+
+  // 해당 날짜의 데이터 가져오기
+  const targetData = clinicData[dateStr] || getEmptyData();
+
+  // 보고서 데이터 갱신
+  updateDashboardAndReport(targetData);
+
+  // 대시보드 홈의 Daily 모드 날짜도 동기화
+  document.getElementById('dash-date-select').value = dateStr;
+  syncDateStatus();
 }
 
 
@@ -1151,29 +1420,27 @@ function buildReportTable() {
 function switchView(viewId) {
   document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.m-nav-btn').forEach(el => el.classList.remove('active'));
-  
+
   document.getElementById('view-dashboard').style.display = 'none';
   document.getElementById('view-management').style.display = 'none';
   document.getElementById('view-daily-report').style.display = 'none';
+  document.getElementById('view-welfare').style.display = 'none';
+
+  const desktopBtn = document.querySelector(`.sidebar .d-nav-btn[data-target="${viewId}"]`);
+  if(desktopBtn) desktopBtn.classList.add('active');
+  const mobileBtn = document.querySelector(`.m-nav-btn[data-target="${viewId}"]`);
+  if(mobileBtn) mobileBtn.classList.add('active');
 
   if(viewId === 'dashboard') {
-    const desktopBtn = document.querySelector('.sidebar .d-nav-btn[data-target="dashboard"]');
-    if(desktopBtn) desktopBtn.classList.add('active');
-    const mobileBtn = document.querySelector('.m-nav-btn[data-target="dashboard"]');
-    if(mobileBtn) mobileBtn.classList.add('active');
     document.getElementById('view-dashboard').style.display = 'block';
   } else if (viewId === 'management') {
-    const desktopBtn = document.querySelector('.sidebar .d-nav-btn[data-target="management"]');
-    if(desktopBtn) desktopBtn.classList.add('active');
-    const mobileBtn = document.querySelector('.m-nav-btn[data-target="management"]');
-    if(mobileBtn) mobileBtn.classList.add('active');
     document.getElementById('view-management').style.display = 'block';
   } else if (viewId === 'daily-report') {
-    const desktopBtn = document.querySelector('.sidebar .d-nav-btn[data-target="daily-report"]');
-    if(desktopBtn) desktopBtn.classList.add('active');
-    const mobileBtn = document.querySelector('.m-nav-btn[data-target="daily-report"]');
-    if(mobileBtn) mobileBtn.classList.add('active');
     document.getElementById('view-daily-report').style.display = 'block';
+    refreshDailyReport();
+  } else if (viewId === 'welfare') {
+    document.getElementById('view-welfare').style.display = 'block';
+    initWelfareDashboard();
   }
   window.scrollTo({top:0});
 }
@@ -1187,6 +1454,572 @@ function navigateAndScroll(id) {
       window.scrollTo({top: el.getBoundingClientRect().top + window.pageYOffset - yOffset, behavior: 'smooth'});
     }
   }, 50);
+}
+
+// ═══════════════════════════════════════════════════════
+// ★ 사내근로복지기금 대시보드 로직 ★
+// ═══════════════════════════════════════════════════════
+
+const WF_CATEGORIES = {
+  '기숙사': { color: '#4361EE', icon: 'home' },
+  '인센티브': { color: '#7209B7', icon: 'military_tech' },
+  '체력/복지': { color: '#4CC9F0', icon: 'fitness_center' },
+  '주택담보': { color: '#F77F00', icon: 'real_estate_agent' },
+  '소개비': { color: '#F72585', icon: 'handshake' },
+  '경조/포상': { color: '#10B981', icon: 'celebration' },
+  '기타': { color: '#94A3B8', icon: 'more_horiz' }
+};
+
+// 실제 엑셀 기반 샘플 데이터 (2025년 월별)
+const welfareMonthlyData = {
+  '2025-01': {
+    income: 2000,  // 보증금 반환 등 (만원)
+    expense: 5411,
+    categories: { '기숙사': 1600, '인센티브': 2200, '체력/복지': 330, '주택담보': 400, '소개비': 0, '경조/포상': 40, '기타': 841 },
+    details: [
+      { date: '01.02', desc: '이지영 기숙사 월세', cat: '기숙사', amount: 50 },
+      { date: '01.13', desc: '1월 생일자 포상금 (8명)', cat: '경조/포상', amount: 40 },
+      { date: '01.21', desc: '나동규 원장님 기숙사 월세', cat: '기숙사', amount: 30 },
+      { date: '01.24', desc: '정세윤 원장님 기숙사 보증금', cat: '기숙사', amount: 2000 },
+      { date: '01.31', desc: '김혜진 체력단련비', cat: '체력/복지', amount: 230 },
+      { date: '01.31', desc: '김혜진 자녀 복지 지원', cat: '체력/복지', amount: 100 },
+      { date: '01.31', desc: '문치영 주택담보지원', cat: '주택담보', amount: 400 },
+      { date: '01.31', desc: '이정우 인센티브', cat: '인센티브', amount: 200 },
+      { date: '01.31', desc: '한선협 기숙사 월세', cat: '기숙사', amount: 200 },
+      { date: '01.31', desc: '한선협 인센티브', cat: '인센티브', amount: 600 },
+      { date: '01.31', desc: '문치영 인센티브', cat: '인센티브', amount: 400 },
+      { date: '01.31', desc: '정세윤 인센티브', cat: '인센티브', amount: 1000 },
+      { date: '01.31', desc: '여직원 기숙사 월세', cat: '기숙사', amount: 66 }
+    ]
+  },
+  '2025-02': {
+    income: 0,
+    expense: 5823,
+    categories: { '기숙사': 1530, '인센티브': 1200, '체력/복지': 330, '주택담보': 0, '소개비': 430, '경조/포상': 35, '기타': 2298 },
+    details: [
+      { date: '02.03', desc: '이지영 기숙사 월세', cat: '기숙사', amount: 50 },
+      { date: '02.03', desc: '2월 생일자 포상금 (7명)', cat: '경조/포상', amount: 35 },
+      { date: '02.03', desc: '4분기 소개비 (13명)', cat: '소개비', amount: 430 },
+      { date: '02.21', desc: '나동규 원장님 기숙사 월세', cat: '기숙사', amount: 30 },
+      { date: '02.28', desc: '김혜진 자녀 복지 지원', cat: '체력/복지', amount: 100 },
+      { date: '02.28', desc: '한선협 인센티브', cat: '인센티브', amount: 600 },
+      { date: '02.28', desc: '이정우 인센티브', cat: '인센티브', amount: 200 },
+      { date: '02.28', desc: '한선협 기숙사 월세', cat: '기숙사', amount: 200 },
+      { date: '02.28', desc: '김혜진 체력단련비', cat: '체력/복지', amount: 230 },
+      { date: '02.28', desc: '문치영 인센티브', cat: '인센티브', amount: 400 },
+      { date: '02.28', desc: '여직원 기숙사 월세', cat: '기숙사', amount: 66 }
+    ]
+  },
+  '2025-03': {
+    income: 7,  // 이자수입
+    expense: 7695,
+    categories: { '기숙사': 1596, '인센티브': 1200, '체력/복지': 469, '주택담보': 3700, '소개비': 0, '경조/포상': 15, '기타': 715 },
+    details: [
+      { date: '03.04', desc: '3월 생일자 포상금 (3명)', cat: '경조/포상', amount: 15 },
+      { date: '03.21', desc: '나동규 원장님 기숙사 월세', cat: '기숙사', amount: 30 },
+      { date: '03.31', desc: '김혜진 체력단련비', cat: '체력/복지', amount: 230 },
+      { date: '03.31', desc: '김혜진 자녀 복지 지원', cat: '체력/복지', amount: 100 },
+      { date: '03.31', desc: '이정우 주택담보지원', cat: '주택담보', amount: 1800 },
+      { date: '03.31', desc: '김혜진 주택담보지원', cat: '주택담보', amount: 1500 },
+      { date: '03.31', desc: '문치영 인센티브', cat: '인센티브', amount: 400 },
+      { date: '03.31', desc: '이정우 인센티브', cat: '인센티브', amount: 200 },
+      { date: '03.31', desc: '문치영 주택담보지원', cat: '주택담보', amount: 400 },
+      { date: '03.31', desc: '한선협 기숙사 월세', cat: '기숙사', amount: 200 },
+      { date: '03.31', desc: '한선협 인센티브', cat: '인센티브', amount: 600 },
+      { date: '03.31', desc: '이진호 모성보호', cat: '체력/복지', amount: 139 }
+    ]
+  },
+  '2025-04': {
+    income: 0,
+    expense: 4731,
+    categories: { '기숙사': 1646, '인센티브': 1200, '체력/복지': 850, '주택담보': 0, '소개비': 0, '경조/포상': 65, '기타': 970 },
+    details: [
+      { date: '04.03', desc: '김지혜 결혼 축의금', cat: '경조/포상', amount: 50 },
+      { date: '04.12', desc: '4월 생일자 포상금 (4명)', cat: '경조/포상', amount: 15 },
+      { date: '04.21', desc: '나동규 원장님 기숙사 월세', cat: '기숙사', amount: 30 },
+      { date: '04.21', desc: '이진호 기숙사 중개수수료', cat: '기숙사', amount: 28 },
+      { date: '04.21', desc: '이진호 기숙사 계약금', cat: '기숙사', amount: 50 },
+      { date: '04.30', desc: '한선협 기숙사 월세', cat: '기숙사', amount: 200 },
+      { date: '04.30', desc: '문치영 인센티브', cat: '인센티브', amount: 400 },
+      { date: '04.30', desc: '이진호 모성보호', cat: '체력/복지', amount: 520 },
+      { date: '04.30', desc: '이정우 인센티브', cat: '인센티브', amount: 200 },
+      { date: '04.30', desc: '김혜진 체력단련비', cat: '체력/복지', amount: 230 },
+      { date: '04.30', desc: '김혜진 자녀 복지 지원', cat: '체력/복지', amount: 100 },
+      { date: '04.30', desc: '한선협 인센티브', cat: '인센티브', amount: 600 },
+      { date: '04.30', desc: '여직원 기숙사 월세', cat: '기숙사', amount: 66 }
+    ]
+  },
+  '2025-05': {
+    income: 0,
+    expense: 4760,
+    categories: { '기숙사': 1506, '인센티브': 0, '체력/복지': 850, '주택담보': 0, '소개비': 0, '경조/포상': 25, '기타': 2379 },
+    details: [
+      { date: '05.01', desc: '이진호 기숙사 잔금', cat: '기숙사', amount: 150 },
+      { date: '05.01', desc: '이진호 기숙사 월세', cat: '기숙사', amount: 77 },
+      { date: '05.01', desc: '5월 생일자 포상금 (5명)', cat: '경조/포상', amount: 25 },
+      { date: '05.09', desc: '기금관리비용', cat: '기타', amount: 100 },
+      { date: '05.26', desc: '나동규 원장님 기숙사 월세', cat: '기숙사', amount: 30 },
+      { date: '05.29', desc: '현금 출금 (현금수령증)', cat: '기타', amount: 1050 },
+      { date: '05.31', desc: '김혜진 자녀 복지 지원', cat: '체력/복지', amount: 100 },
+      { date: '05.31', desc: '김혜진 체력단련비', cat: '체력/복지', amount: 230 },
+      { date: '05.31', desc: '이진호 모성보호', cat: '체력/복지', amount: 520 }
+    ]
+  },
+  '2025-06': {
+    income: 0,
+    expense: 4200,
+    categories: { '기숙사': 1430, '인센티브': 1200, '체력/복지': 330, '주택담보': 400, '소개비': 310, '경조/포상': 30, '기타': 500 },
+    details: [
+      { date: '06.02', desc: '이지영 기숙사 월세', cat: '기숙사', amount: 50 },
+      { date: '06.05', desc: '6월 생일자 포상금', cat: '경조/포상', amount: 30 },
+      { date: '06.15', desc: '1분기 소개비', cat: '소개비', amount: 310 },
+      { date: '06.21', desc: '나동규 원장님 기숙사 월세', cat: '기숙사', amount: 30 },
+      { date: '06.30', desc: '김혜진 체력단련비', cat: '체력/복지', amount: 230 },
+      { date: '06.30', desc: '김혜진 자녀 복지 지원', cat: '체력/복지', amount: 100 },
+      { date: '06.30', desc: '문치영 인센티브', cat: '인센티브', amount: 400 },
+      { date: '06.30', desc: '이정우 인센티브', cat: '인센티브', amount: 200 },
+      { date: '06.30', desc: '한선협 인센티브', cat: '인센티브', amount: 600 },
+      { date: '06.30', desc: '문치영 주택담보지원', cat: '주택담보', amount: 400 },
+      { date: '06.30', desc: '한선협 기숙사 월세', cat: '기숙사', amount: 200 },
+      { date: '06.30', desc: '여직원 기숙사 월세', cat: '기숙사', amount: 66 }
+    ]
+  }
+};
+
+// 초기 잔액 (엑셀 기준 384,775,530원 = 약 38,478만원)
+const WF_INITIAL_BALANCE = 38478;
+
+let wfCharts = {};
+let wfInitialized = false;
+
+// ═══════════════════════════════════════════════════════
+// ★ 복지기금 데이터 입력 폼 로직 ★
+// ═══════════════════════════════════════════════════════
+
+const WF_CAT_KEYS = ['기숙사','인센티브','체력/복지','주택담보','소개비','경조/포상','기타'];
+
+// 카테고리 합계 자동계산
+document.querySelectorAll('[id^="wf-input-cat-"]').forEach(el => {
+  el.addEventListener('input', updateWfCatTotal);
+});
+
+function updateWfCatTotal() {
+  let total = 0;
+  for (let i = 0; i < 7; i++) {
+    total += parseFloat(document.getElementById(`wf-input-cat-${i}`).value) || 0;
+  }
+  document.getElementById('wf-input-cat-total').innerText = total.toLocaleString() + ' 만원';
+}
+
+// 월 변경 시 기존 입력 데이터 불러오기
+document.getElementById('wf-input-month').addEventListener('change', loadWfInputForm);
+
+function loadWfInputForm() {
+  const month = document.getElementById('wf-input-month').value;
+  if (!month) return;
+
+  const saved = welfareUserData[month];
+  if (saved) {
+    document.getElementById('wf-input-income').value = saved.income || '';
+    WF_CAT_KEYS.forEach((c, i) => {
+      document.getElementById(`wf-input-cat-${i}`).value = saved.categories[c] || '';
+    });
+    wfTempDetails = saved.details ? [...saved.details] : [];
+  } else {
+    document.getElementById('wf-input-income').value = '';
+    for (let i = 0; i < 7; i++) document.getElementById(`wf-input-cat-${i}`).value = '';
+    wfTempDetails = [];
+  }
+  updateWfCatTotal();
+  renderWfDetailList();
+}
+
+// 상세 내역 추가
+function addWfDetail() {
+  const date = document.getElementById('wf-detail-date').value.trim();
+  const desc = document.getElementById('wf-detail-desc').value.trim();
+  const cat = document.getElementById('wf-detail-cat').value;
+  const amount = parseFloat(document.getElementById('wf-detail-amount').value) || 0;
+
+  if (!desc || amount <= 0) { alert('내역과 금액을 입력해주세요.'); return; }
+
+  wfTempDetails.push({ date: date || '-', desc, cat, amount });
+  renderWfDetailList();
+
+  // 입력 필드 초기화
+  document.getElementById('wf-detail-date').value = '';
+  document.getElementById('wf-detail-desc').value = '';
+  document.getElementById('wf-detail-amount').value = '';
+}
+
+// 상세 내역 삭제
+function removeWfDetail(idx) {
+  wfTempDetails.splice(idx, 1);
+  renderWfDetailList();
+}
+
+// 상세 내역 테이블 렌더링
+function renderWfDetailList() {
+  const tbody = document.getElementById('wf-detail-list');
+  if (wfTempDetails.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-text-light text-xs py-4">등록된 상세 내역이 없습니다.</td></tr>';
+    return;
+  }
+  const catBadge = {
+    '기숙사':'bg-blue-50 text-blue-600','인센티브':'bg-purple-50 text-purple-600',
+    '체력/복지':'bg-cyan-50 text-cyan-600','주택담보':'bg-orange-50 text-orange-600',
+    '소개비':'bg-pink-50 text-pink-600','경조/포상':'bg-green-50 text-green-600','기타':'bg-gray-100 text-gray-500'
+  };
+  let html = '';
+  wfTempDetails.forEach((d, i) => {
+    html += `<tr>
+      <td class="whitespace-nowrap text-text-gray">${d.date}</td>
+      <td class="font-bold text-text-dark">${d.desc}</td>
+      <td><span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-extrabold ${catBadge[d.cat] || ''}">${d.cat}</span></td>
+      <td class="td-number">${d.amount.toLocaleString()}만</td>
+      <td class="text-center"><button onclick="removeWfDetail(${i})" class="text-gray-300 hover:text-red-500 transition"><span class="material-symbols-rounded" style="font-size:16px">close</span></button></td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+// 복지기금 데이터 저장
+function saveWelfareData() {
+  const month = document.getElementById('wf-input-month').value;
+  if (!month) { alert('기준 월을 선택해주세요.'); return; }
+
+  const income = parseFloat(document.getElementById('wf-input-income').value) || 0;
+  let categories = {};
+  let totalExpense = 0;
+  WF_CAT_KEYS.forEach((c, i) => {
+    const val = parseFloat(document.getElementById(`wf-input-cat-${i}`).value) || 0;
+    categories[c] = val;
+    totalExpense += val;
+  });
+
+  welfareUserData[month] = {
+    income,
+    expense: totalExpense,
+    categories,
+    details: [...wfTempDetails]
+  };
+
+  localStorage.setItem('welfare_user_data', JSON.stringify(welfareUserData));
+  showToast("복지기금 저장 완료", `${month.replace('-','년 ')}월 데이터가 저장되었습니다.`);
+}
+
+// 하드코딩 데이터 + 사용자 입력 데이터를 merge하여 최종 데이터 생성
+function getMergedWelfareData() {
+  const merged = {};
+
+  // 1) 하드코딩(엑셀) 데이터 복사
+  for (const [m, d] of Object.entries(welfareMonthlyData)) {
+    merged[m] = { ...d, categories: { ...d.categories }, details: [...d.details] };
+  }
+
+  // 2) 사용자 입력 데이터로 덮어쓰기 (사용자가 입력한 월은 사용자 데이터 우선)
+  for (const [m, d] of Object.entries(welfareUserData)) {
+    merged[m] = { income: d.income, expense: d.expense, categories: { ...d.categories }, details: [...(d.details || [])] };
+  }
+
+  return merged;
+}
+
+function initWelfareDashboard() {
+  const monthPicker = document.getElementById('welfare-month-select');
+  if (!monthPicker.value) {
+    // 가장 최근 데이터가 있는 월로 설정
+    const allMonths = Object.keys(getMergedWelfareData()).sort();
+    monthPicker.value = allMonths.length > 0 ? allMonths[allMonths.length - 1] : todayMonthISO;
+  }
+
+  monthPicker.removeEventListener('change', refreshWelfare);
+  monthPicker.addEventListener('change', refreshWelfare);
+
+  refreshWelfare();
+}
+
+function refreshWelfare() {
+  const allData = getMergedWelfareData();
+  const selectedMonth = document.getElementById('welfare-month-select').value;
+  const monthData = allData[selectedMonth];
+
+  // 잔액 계산: 초기잔액에서 선택월까지의 누적 지출을 빼고 수입을 더함
+  let cumulativeExpense = 0;
+  let cumulativeIncome = 0;
+  let yearExpense = 0;
+  const sortedMonths = Object.keys(allData).sort();
+  const selectedYear = selectedMonth.slice(0, 4);
+
+  sortedMonths.forEach(m => {
+    if (m <= selectedMonth) {
+      cumulativeExpense += allData[m].expense;
+      cumulativeIncome += allData[m].income;
+    }
+    if (m.startsWith(selectedYear) && m <= selectedMonth) {
+      yearExpense += allData[m].expense;
+    }
+  });
+
+  const balance = WF_INITIAL_BALANCE - cumulativeExpense + cumulativeIncome;
+  const monthExpense = monthData ? monthData.expense : 0;
+  const monthIncome = monthData ? monthData.income : 0;
+
+  // KPI 카드 업데이트
+  const balanceWon = balance * 10000;
+  if (balanceWon >= 100000000) {
+    document.getElementById('wf-balance').innerText = (balanceWon / 100000000).toFixed(2);
+    document.getElementById('wf-balance-unit').innerText = '억원';
+  } else {
+    document.getElementById('wf-balance').innerText = balance.toLocaleString();
+    document.getElementById('wf-balance-unit').innerText = '만원';
+  }
+  document.getElementById('wf-month-expense').innerText = monthExpense.toLocaleString();
+  document.getElementById('wf-month-income').innerText = monthIncome.toLocaleString();
+  document.getElementById('wf-year-expense').innerText = yearExpense.toLocaleString();
+
+  const mLabel = selectedMonth.replace('-', '년 ') + '월';
+  document.getElementById('wf-expense-label').innerText = mLabel + ' 지출';
+  document.getElementById('wf-income-label').innerText = mLabel + ' 수입';
+  document.getElementById('wf-table-period').innerText = mLabel + ' 기준';
+
+  // 카테고리 도넛 차트
+  renderWfCategoryChart(monthData);
+
+  // 월별 추이 바 차트
+  renderWfMonthlyChart(selectedMonth);
+
+  // 잔액 추이 라인 차트
+  renderWfBalanceChart(selectedMonth);
+
+  // 최근 지출 테이블
+  renderWfRecentTable(monthData, selectedMonth);
+}
+
+function renderWfCategoryChart(monthData) {
+  const ctx = document.getElementById('wf-chart-category');
+  if (wfCharts.category) wfCharts.category.destroy();
+
+  const cats = Object.keys(WF_CATEGORIES);
+  const values = cats.map(c => monthData ? (monthData.categories[c] || 0) : 0);
+  const colors = cats.map(c => WF_CATEGORIES[c].color);
+  const total = values.reduce((a, b) => a + b, 0);
+
+  wfCharts.category = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: cats,
+      datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1E293B',
+          titleFont: { family: "'Manrope',sans-serif", weight: 800, size: 13 },
+          bodyFont: { family: "'Inter',sans-serif", weight: 600, size: 12 },
+          padding: 12,
+          cornerRadius: 10,
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.toLocaleString()}만원 (${total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0}%)`
+          }
+        }
+      }
+    }
+  });
+
+  // 커스텀 범례
+  const legendEl = document.getElementById('wf-category-legend');
+  let legendHtml = '<div class="grid grid-cols-1 gap-2">';
+  cats.forEach((c, i) => {
+    const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) : 0;
+    if (values[i] > 0) {
+      legendHtml += `
+        <div class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 transition">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-sm flex-shrink-0" style="background:${colors[i]}"></span>
+            <span class="text-xs font-bold text-text-dark">${c}</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-extrabold text-text-dark font-heading">${values[i].toLocaleString()}만</span>
+            <span class="text-[10px] font-bold text-text-light w-10 text-right">${pct}%</span>
+          </div>
+        </div>`;
+    }
+  });
+  legendHtml += '</div>';
+  legendEl.innerHTML = legendHtml;
+}
+
+function renderWfMonthlyChart(selectedMonth) {
+  const ctx = document.getElementById('wf-chart-monthly');
+  if (wfCharts.monthly) wfCharts.monthly.destroy();
+
+  const allData = getMergedWelfareData();
+  const months = Object.keys(allData).sort();
+  const labels = months.map(m => m.slice(5) + '월');
+  const expenses = months.map(m => allData[m].expense);
+  const incomes = months.map(m => allData[m].income);
+
+  wfCharts.monthly = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: '지출',
+          data: expenses,
+          backgroundColor: months.map(m => m === selectedMonth ? '#F72585' : 'rgba(247, 37, 133, 0.25)'),
+          borderRadius: 8,
+          borderSkipped: false,
+          barPercentage: 0.6,
+          categoryPercentage: 0.7
+        },
+        {
+          label: '수입',
+          data: incomes,
+          backgroundColor: months.map(m => m === selectedMonth ? '#10B981' : 'rgba(16, 185, 129, 0.25)'),
+          borderRadius: 8,
+          borderSkipped: false,
+          barPercentage: 0.6,
+          categoryPercentage: 0.7
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ...hiddenGrid, ticks: { font: { weight: 700, size: 11 } } },
+        y: {
+          ...cleanGrid,
+          ticks: {
+            font: { weight: 600, size: 10 },
+            callback: v => v.toLocaleString() + '만'
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { weight: 700, size: 11 } }
+        },
+        tooltip: {
+          backgroundColor: '#1E293B',
+          titleFont: { family: "'Manrope',sans-serif", weight: 800, size: 13 },
+          bodyFont: { family: "'Inter',sans-serif", weight: 600, size: 12 },
+          padding: 12,
+          cornerRadius: 10,
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}만원` }
+        }
+      }
+    }
+  });
+}
+
+function renderWfBalanceChart(selectedMonth) {
+  const ctx = document.getElementById('wf-chart-balance');
+  if (wfCharts.balance) wfCharts.balance.destroy();
+
+  const allData = getMergedWelfareData();
+  const months = Object.keys(allData).sort();
+  const labels = months.map(m => m.slice(5) + '월');
+  let runningBalance = WF_INITIAL_BALANCE;
+  const balances = months.map(m => {
+    runningBalance = runningBalance - allData[m].expense + allData[m].income;
+    return runningBalance;
+  });
+
+  const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 280);
+  gradient.addColorStop(0, 'rgba(67, 97, 238, 0.15)');
+  gradient.addColorStop(1, 'rgba(67, 97, 238, 0)');
+
+  wfCharts.balance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: '잔액',
+        data: balances,
+        borderColor: '#4361EE',
+        backgroundColor: gradient,
+        fill: true,
+        tension: 0.4,
+        borderWidth: 3,
+        pointBackgroundColor: months.map(m => m === selectedMonth ? '#4361EE' : '#FFFFFF'),
+        pointBorderColor: '#4361EE',
+        pointBorderWidth: 2,
+        pointRadius: months.map(m => m === selectedMonth ? 7 : 4),
+        pointHoverRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ...hiddenGrid, ticks: { font: { weight: 700, size: 11 } } },
+        y: {
+          ...cleanGrid,
+          ticks: {
+            font: { weight: 600, size: 10 },
+            callback: v => (v / 10000 * 10000 >= 10000) ? (v / 10000).toFixed(1) + '억' : v.toLocaleString() + '만'
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1E293B',
+          titleFont: { family: "'Manrope',sans-serif", weight: 800, size: 13 },
+          bodyFont: { family: "'Inter',sans-serif", weight: 600, size: 12 },
+          padding: 12,
+          cornerRadius: 10,
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              return v >= 10000 ? ` 잔액: ${(v/10000).toFixed(2)}억원` : ` 잔액: ${v.toLocaleString()}만원`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderWfRecentTable(monthData, selectedMonth) {
+  const tbody = document.getElementById('wf-recent-table');
+  if (!monthData || !monthData.details || monthData.details.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-text-gray text-sm py-8">해당 월의 지출 내역이 없습니다.</td></tr>';
+    return;
+  }
+
+  const catBadgeColors = {
+    '기숙사': 'bg-blue-50 text-blue-600',
+    '인센티브': 'bg-purple-50 text-purple-600',
+    '체력/복지': 'bg-cyan-50 text-cyan-600',
+    '주택담보': 'bg-orange-50 text-orange-600',
+    '소개비': 'bg-pink-50 text-pink-600',
+    '경조/포상': 'bg-green-50 text-green-600',
+    '기타': 'bg-gray-100 text-gray-500'
+  };
+
+  let html = '';
+  monthData.details.forEach(d => {
+    const badgeClass = catBadgeColors[d.cat] || 'bg-gray-100 text-gray-500';
+    html += `<tr>
+      <td class="whitespace-nowrap text-text-gray">${d.date}</td>
+      <td class="font-bold text-text-dark">${d.desc}</td>
+      <td><span class="inline-block px-2.5 py-1 rounded-lg text-[10px] font-extrabold ${badgeClass}">${d.cat}</span></td>
+      <td class="td-number">${d.amount.toLocaleString()}만</td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = html;
 }
 
 window.onload = initDashboard;
